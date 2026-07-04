@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Админка · {{ settings.app_name }}{% endblock %}
+
+{% block content %}
+<section class="section admin-header">
+  <div>
+    <p class="eyebrow">Преподаватель</p>
+    <h1>Ученики и заявки</h1>
+    <p>Быстрый контроль: кто активен, где давно не было отчета, какие заявки пришли с публичной страницы.</p>
+  </div>
+  <div class="admin-actions">
+    <a class="button secondary" href="/admin/homework">Все ДЗ</a>
+    <a class="button primary" href="/admin/students/new">+ Создать кабинет</a>
+  </div>
+</section>
+
+<section class="section stats-row">
+  <div class="stat-tile">
+    <span>Активные ученики</span>
+    <strong>{{ active_count }}</strong>
+  </div>
+  <div class="stat-tile">
+    <span>Нужен свежий отчет</span>
+    <strong>{{ stale_student_ids|length }}</strong>
+  </div>
+  <div class="stat-tile">
+    <span>Новые заявки</span>
+    <strong>{{ lead_counts.get("new", 0) }}</strong>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading compact">
+    <h2>Ученики</h2>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ученик</th>
+          <th>Предмет</th>
+          <th>Следующий фокус</th>
+          <th>Последний отчет</th>
+          <th>Статус</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+          {% set report = latest_reports.get(student.id) %}
+          <tr class="{% if student.id in stale_student_ids %}is-stale{% endif %}">
+            <td>
+              <strong>{{ student.name }}</strong>
+              <span class="muted block">{{ student.parent_contact or student.parent_name }}</span>
+            </td>
+            <td>{{ student.subject }}</td>
+            <td>{{ student.next_lesson_focus or "—" }}</td>
+            <td>
+              {% if report %}
+                {{ report.lesson_date|date }}
+              {% else %}
+                <span class="muted">Нет отчетов</span>
+              {% endif %}
+            </td>
+            <td><span class="badge {{ student.status|status_class }}">{{ student.status|status_label }}</span></td>
+            <td><a class="button small secondary" href="/admin/students/{{ student.id }}">Открыть</a></td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="6" class="empty-cell">Пока нет учеников.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="section leads-section">
+  <div class="leads-head">
+    <div>
+      <p class="eyebrow">Воронка</p>
+      <h2>Заявки с сайта</h2>
+    </div>
+    <strong class="selected-count">Показано: {{ selected_leads_count }}</strong>
+  </div>
+
+  <form method="get" action="/admin" class="lead-filter">
+    {% for status in lead_statuses %}
+      <label class="filter-chip">
+        <input
+          type="checkbox"
+          name="lead_status"
+          value="{{ status }}"
+          {% if status in selected_lead_statuses %}checked{% endif %}
+          onchange="this.form.submit()"
+        >
+        <span>{{ status|status_label }}</span>
+        <strong>{{ lead_counts.get(status, 0) }}</strong>
+      </label>
+    {% endfor %}
+  </form>
+
+  <div class="lead-card-grid">
+    {% for lead in leads %}
+      <article class="lead-card">
+        <div class="lead-card-top">
+          <div>
+            <span class="muted">{{ lead.created_at|date }} · {{ lead.student_class }}</span>
+            <h3>{{ lead.parent_name }}</h3>
+          </div>
+          <span class="badge {{ lead.status|status_class }}">{{ lead.status|status_label }}</span>
+        </div>
+
+        <div class="lead-info">
+          <p><b>Предмет:</b> {{ lead.subject }}</p>
+          <p><b>Цель:</b> {{ lead.goal }}</p>
+          <p><b>Контакт:</b> {{ lead.contact }}</p>
+        </div>
+
+        <form method="post" action="/admin/leads/{{ lead.id }}/status" class="lead-status-form">
+          <label>
+            Статус
+            <select name="status" onchange="this.form.submit()">
+              {% for status in lead_statuses %}
+                <option value="{{ status }}" {% if lead.status == status %}selected{% endif %}>{{ status|status_label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+        </form>
+
+        <div class="lead-actions">
+          <button
+            class="button small secondary js-contact-lead"
+            type="button"
+            data-lead-id="{{ lead.id }}"
+            data-lead-status="{{ lead.status }}"
+            data-parent-name="{{ lead.parent_name }}"
+            data-student-class="{{ lead.student_class }}"
+            data-subject="{{ lead.subject }}"
+            data-goal="{{ lead.goal }}"
+            data-contact="{{ lead.contact }}"
+          >Связаться</button>
+          <form method="post" action="/admin/leads/{{ lead.id }}/approve">
+            <button class="button small primary" type="submit">Одобрить</button>
+          </form>
+          <form method="post" action="/admin/leads/{{ lead.id }}/reject">
+            <button class="button small danger" type="submit">Отклонить</button>
+          </form>
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <h3>Заявок в выбранных статусах нет</h3>
+        <p>Выберите другие статусы в фильтре выше.</p>
+      </div>
+    {% endfor %}
+  </div>
+
+  <dialog class="contact-dialog" id="lead-contact-dialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <h3>Контакты заявки</h3>
+        <button class="link-button" value="close" aria-label="Закрыть">Закрыть</button>
+      </div>
+      <div class="dialog-body">
+        <p><b>Имя:</b> <span id="dialog-parent-name"></span></p>
+        <p><b>Класс:</b> <span id="dialog-student-class"></span></p>
+        <p><b>Предмет:</b> <span id="dialog-subject"></span></p>
+        <p><b>Цель:</b> <span id="dialog-goal"></span></p>
+        <p><b>Контакт:</b> <span id="dialog-contact"></span></p>
+      </div>
+    </form>
+  </dialog>
+</section>
+
+<script>
+  const contactDialog = document.getElementById("lead-contact-dialog");
+  const contactButtons = document.querySelectorAll(".js-contact-lead");
+  let activeLeadId = null;
+  let activeLeadStatus = null;
+
+  function setText(id, value) {
+    document.getElementById(id).textContent = value || "—";
+  }
+
+  contactButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      activeLeadId = button.dataset.leadId;
+      activeLeadStatus = button.dataset.leadStatus;
+      setText("dialog-parent-name", button.dataset.parentName);
+      setText("dialog-student-class", button.dataset.studentClass);
+      setText("dialog-subject", button.dataset.subject);
+      setText("dialog-goal", button.dataset.goal);
+      setText("dialog-contact", button.dataset.contact);
+      contactDialog.showModal();
+    });
+  });
+
+  contactDialog.addEventListener("close", async () => {
+    if (activeLeadId && activeLeadStatus === "new") {
+      await fetch(`/admin/leads/${activeLeadId}/contacted`, { method: "POST" });
+      window.location.reload();
+    }
+    activeLeadId = null;
+    activeLeadStatus = null;
+  });
+</script>
+{% endblock %}

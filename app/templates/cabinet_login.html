@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Вход ученика · Progress Tutor{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="auth-box">
+    <p class="eyebrow">Личный кабинет</p>
+    <h1>Вход для ученика</h1>
+    <p>
+      Преподаватель должен был отправить вам 10-значный код доступа.
+      Введите его ниже, чтобы открыть личный кабинет с планом, отчетами и домашними заданиями.
+    </p>
+    {% if error %}
+      <div class="notice danger">Код не найден. Проверьте 10 цифр и попробуйте еще раз.</div>
+    {% endif %}
+    <form method="post" action="/cabinet/login" class="stacked-form">
+      <label>
+        Код доступа
+        <input
+          name="code"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="10"
+          pattern="[0-9]{10}"
+          placeholder="1234567890"
+          required
+          autofocus
+        >
+      </label>
+      <button class="button primary" type="submit">Войти в кабинет</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

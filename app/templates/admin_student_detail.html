@@ -1,0 +1,334 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.name }} · Админка{% endblock %}
+
+{% block content %}
+<section class="section student-admin-head">
+  <div>
+    <p class="eyebrow">{{ student.subject }}</p>
+    <h1>{{ student.name }}</h1>
+    <p>{{ student.goal }}</p>
+  </div>
+  <div class="admin-actions">
+    <a class="button secondary" href="/admin/students/{{ student.id }}/edit">Редактировать обзор</a>
+    <a class="button secondary" href="{{ cabinet_url(student.access_token) }}" target="_blank" rel="noreferrer">Открыть кабинет</a>
+  </div>
+</section>
+
+{% if created %}
+  <section class="section">
+    <div class="notice success">Кабинет создан. Скопируйте код ниже и отправьте родителю или ученику.</div>
+  </section>
+{% endif %}
+{% if error == "empty_report" %}
+  <section class="section">
+    <div class="notice danger">Отчет не опубликован: все поля, кроме ссылки на материалы, обязательны.</div>
+  </section>
+{% endif %}
+{% if error == "homework_pdf_only" %}
+  <section class="section">
+    <div class="notice danger">Файл домашнего задания не прикреплен: сейчас поддерживается только PDF.</div>
+  </section>
+{% endif %}
+
+<section class="section access-line">
+  <label>
+    Код для входа родителя и ученика
+    <input id="cabinet-code" readonly value="{{ student.access_code }}">
+  </label>
+  <button class="button secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cabinet-code').value)">Скопировать код</button>
+</section>
+
+<section class="section summary-grid">
+  <article class="summary-block">
+    <span class="muted">Текущий статус</span>
+    <p>{{ student.current_status or "Пока не заполнено" }}</p>
+  </article>
+  <article class="summary-block">
+    <span class="muted">Фокус следующего урока</span>
+    <p>{{ student.next_lesson_focus or "Пока не заполнено" }}</p>
+  </article>
+  <article class="summary-block">
+    <span class="muted">Следующий чекпоинт</span>
+    <p>{{ student.next_checkpoint_date|date }}</p>
+  </article>
+</section>
+
+<section class="section admin-columns topic-homework-grid">
+  <div class="admin-panel">
+    <div class="section-heading compact">
+      <h2>Темы и статусы</h2>
+    </div>
+    <div class="topic-admin-list">
+      {% for topic in student.topics %}
+        <form method="post" action="/admin/topics/{{ topic.id }}/update" class="topic-row-edit">
+          <input name="topic" value="{{ topic.topic }}" required>
+          <select name="status">
+            {% for status in topic_statuses %}
+              <option value="{{ status }}" {% if topic.status == status %}selected{% endif %}>{{ status|status_label }}</option>
+            {% endfor %}
+          </select>
+          <input name="comment" value="{{ topic.comment }}" placeholder="Короткий комментарий">
+          <button class="button small secondary" type="submit">Сохранить</button>
+        </form>
+      {% else %}
+        <p class="muted">Тем пока нет.</p>
+      {% endfor %}
+    </div>
+    <form method="post" action="/admin/students/{{ student.id }}/topics" class="mini-form">
+      <input name="topic" required placeholder="Новая тема">
+      <select name="status">
+        {% for status in topic_statuses %}
+          <option value="{{ status }}">{{ status|status_label }}</option>
+        {% endfor %}
+      </select>
+      <input name="comment" placeholder="Комментарий">
+      <button class="button secondary" type="submit">Добавить тему</button>
+    </form>
+  </div>
+
+  <div class="admin-panel">
+    <div class="section-heading compact">
+      <h2>Текущее домашнее задание</h2>
+    </div>
+    <div class="homework-admin-list">
+    {% for item in student.homework_items %}
+      <article class="homework-admin-card {% if item.is_completed %}is-completed{% endif %}">
+        <div class="homework-card-head">
+          <div>
+            <strong>{{ item.title }}</strong>
+            <span class="muted block">Срок: {{ item.due_date|date }}</span>
+          </div>
+          <span class="badge {% if item.is_completed %}ready-for-test{% else %}with-help{% endif %}">
+            {% if item.is_completed %}Выполнено{% else %}Активно{% endif %}
+          </span>
+        </div>
+        <p>{{ item.description }}</p>
+        {% if item.attachment_filename %}
+          <a class="file-pill" href="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/file" target="_blank" rel="noreferrer">PDF: {{ item.attachment_filename }}</a>
+        {% endif %}
+        {% if item.solution_filename %}
+          <a class="file-pill solution-pill" href="/admin/homework/{{ item.id }}/solution" target="_blank" rel="noreferrer">Решение: {{ item.solution_filename }}</a>
+        {% else %}
+          <span class="muted block">Решение пока не прикреплено.</span>
+        {% endif %}
+
+        <div class="homework-actions">
+          <details class="edit-panel">
+            <summary class="button small secondary">Редактировать</summary>
+            <form method="post" action="/admin/homework/{{ item.id }}/edit" class="stacked-form small-gap" enctype="multipart/form-data">
+              <label>
+                Название
+                <input name="title" required value="{{ item.title }}">
+              </label>
+              <label>
+                Что сделать
+                <textarea name="description" required rows="3">{{ item.description }}</textarea>
+              </label>
+              <label>
+                Срок
+                <input name="due_date" type="date" value="{{ item.due_date.isoformat() if item.due_date else '' }}">
+              </label>
+              <label>
+                Заменить PDF
+                <input name="homework_file" type="file" accept="application/pdf,.pdf">
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" name="is_completed" {% if item.is_completed %}checked{% endif %}>
+                Выполнено
+              </label>
+              <button class="button primary" type="submit">Сохранить ДЗ</button>
+            </form>
+          </details>
+          <form method="post" action="/admin/homework/{{ item.id }}/toggle">
+            <button class="button small secondary" type="submit">
+              {% if item.is_completed %}Вернуть в активные{% else %}Отметить готовым{% endif %}
+            </button>
+          </form>
+        </div>
+      </article>
+    {% else %}
+      <p class="muted">Нет активного ДЗ.</p>
+    {% endfor %}
+    </div>
+
+    <details class="compose-panel">
+      <summary class="button secondary">Добавить ДЗ</summary>
+      <form method="post" action="/admin/students/{{ student.id }}/homework" class="stacked-form small-gap" enctype="multipart/form-data">
+        <label>
+          Заголовок ДЗ
+          <input name="title" required placeholder="Например: 10 задач на проценты">
+        </label>
+        <label>
+          Что сделать
+          <textarea name="description" required rows="3" placeholder="Описание задания"></textarea>
+        </label>
+        <label>
+          Срок
+          <input name="due_date" type="date">
+        </label>
+        <label>
+          PDF с домашним заданием
+          <input name="homework_file" type="file" accept="application/pdf,.pdf">
+        </label>
+        <button class="button primary" type="submit">Сохранить новое ДЗ</button>
+      </form>
+    </details>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading compact">
+    <h2>Новый отчет после урока</h2>
+    <p>Все поля обязательны, кроме ссылки на материалы. После сохранения ДЗ также появится в блоке текущего домашнего задания.</p>
+  </div>
+  <form method="post" action="/admin/students/{{ student.id }}/reports" class="report-form" enctype="multipart/form-data">
+    <div class="form-grid">
+      <label>
+        Дата
+        <input name="lesson_date" type="date" required value="{{ today.isoformat() }}">
+      </label>
+      <label>
+        Тема урока
+        <input name="lesson_topic" required placeholder="Квадратные уравнения">
+      </label>
+    </div>
+    <label>
+      Что прошли
+      <textarea name="covered" required rows="3"></textarea>
+    </label>
+    <label>
+      Что получилось
+      <textarea name="worked" required rows="3"></textarea>
+    </label>
+    <label>
+      Что пока слабое
+      <textarea name="weak" required rows="3"></textarea>
+    </label>
+    <label>
+      Домашнее задание
+      <textarea name="homework" required rows="3"></textarea>
+    </label>
+    <label class="checkbox-label">
+      <input type="checkbox" name="homework_completed" checked>
+      Домашнее с прошлого урока было выполнено
+    </label>
+    <label>
+      PDF с новым домашним заданием
+      <input name="homework_file" type="file" accept="application/pdf,.pdf">
+    </label>
+    <label>
+      Комментарий для родителя
+      <textarea name="parent_comment" required rows="3"></textarea>
+    </label>
+    <label>
+      Ссылка на материалы
+      <input name="materials_link" placeholder="Ссылка на Miro / доску / конспект">
+    </label>
+    <button class="button primary" type="submit">Опубликовать отчет</button>
+  </form>
+</section>
+
+<section class="section admin-columns">
+  <div class="admin-panel">
+    <div class="section-heading compact">
+      <h2>Материалы</h2>
+    </div>
+    {% for material in student.materials %}
+      <div class="list-item">
+        <div>
+          <strong>{{ material.title }}</strong>
+          <span class="muted block">
+            {{ material.kind }}
+            {% if material.lesson_report %}
+              · {{ material.lesson_report.lesson_date|date }} · {{ material.lesson_report.lesson_topic }}
+            {% endif %}
+          </span>
+        </div>
+        <a class="button small secondary" href="{{ material.url }}" target="_blank" rel="noreferrer">Открыть</a>
+      </div>
+    {% else %}
+      <p class="muted">Материалов пока нет.</p>
+    {% endfor %}
+    <form method="post" action="/admin/students/{{ student.id }}/materials" class="mini-form material-form">
+      <input name="material_date" type="date" value="{{ today.isoformat() }}">
+      <input name="title" required placeholder="Название занятия или доски">
+      <select name="kind">
+        {% for kind in material_kind_options %}
+          <option value="{{ kind }}">{{ kind }}</option>
+        {% endfor %}
+      </select>
+      <input name="url" required placeholder="Ссылка на Miro / конспект / доску">
+      <button class="button secondary" type="submit">Добавить</button>
+    </form>
+  </div>
+
+  <div class="admin-panel">
+    <div class="section-heading compact">
+      <h2>Месячный чекпоинт</h2>
+    </div>
+    <form method="post" action="/admin/students/{{ student.id }}/checkpoints" class="stacked-form small-gap">
+      <input name="checkpoint_date" type="date" required value="{{ today.isoformat() }}">
+      <textarea name="before" required rows="2" placeholder="Было"></textarea>
+      <textarea name="after" required rows="2" placeholder="Стало"></textarea>
+      <textarea name="improved" required rows="2" placeholder="Что улучшилось"></textarea>
+      <textarea name="blockers" required rows="2" placeholder="Что еще мешает"></textarea>
+      <textarea name="next_month_plan" required rows="2" placeholder="План на следующий месяц"></textarea>
+      <button class="button secondary" type="submit">Добавить чекпоинт</button>
+    </form>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading compact">
+    <h2>История отчетов</h2>
+  </div>
+  <div class="report-list">
+    {% for report in student.reports %}
+      <article class="report-card">
+        <div class="report-card-head">
+          <div>
+            <span class="muted">{{ report.lesson_date|date }}</span>
+            <h3>{{ report.lesson_topic }}</h3>
+          </div>
+          <span class="badge {% if report.homework_completed %}ready-for-test{% else %}with-help{% endif %}">
+            {% if report.homework_completed %}ДЗ было выполнено{% else %}ДЗ требует контроля{% endif %}
+          </span>
+        </div>
+        <div class="report-fields">
+          <p><b>Прошли:</b> {{ report.covered }}</p>
+          <p><b>Получилось:</b> {{ report.worked }}</p>
+          <p><b>Слабое:</b> {{ report.weak }}</p>
+          <p><b>ДЗ:</b> {{ report.homework }}</p>
+          <p><b>Комментарий:</b> {{ report.parent_comment }}</p>
+          {% if report.materials_link %}
+            <p><b>Материалы:</b> <a href="{{ report.materials_link }}" target="_blank" rel="noreferrer">{{ report.materials_link }}</a></p>
+          {% endif %}
+        </div>
+      </article>
+    {% else %}
+      <p class="muted">Отчетов пока нет.</p>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading compact">
+    <h2>История чекпоинтов</h2>
+  </div>
+  <div class="checkpoint-list">
+    {% for checkpoint in student.checkpoints %}
+      <article class="checkpoint-card">
+        <span class="muted">{{ checkpoint.checkpoint_date|date }}</span>
+        <p><b>Было:</b> {{ checkpoint.before }}</p>
+        <p><b>Стало:</b> {{ checkpoint.after }}</p>
+        <p><b>Улучшилось:</b> {{ checkpoint.improved }}</p>
+        <p><b>Мешает:</b> {{ checkpoint.blockers }}</p>
+        <p><b>Дальше:</b> {{ checkpoint.next_month_plan }}</p>
+      </article>
+    {% else %}
+      <p class="muted">Чекпоинтов пока нет.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

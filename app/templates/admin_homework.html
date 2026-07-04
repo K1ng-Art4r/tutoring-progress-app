@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Все ДЗ · Админка{% endblock %}
+
+{% block content %}
+<section class="section admin-header">
+  <div>
+    <p class="eyebrow">Домашние задания</p>
+    <h1>Все ДЗ по ученикам</h1>
+    <p>Единая лента заданий: что задано, кому, какой срок и пришло ли PDF-решение.</p>
+  </div>
+  <div class="admin-actions">
+    <a class="button secondary" href="/admin">К ученикам и заявкам</a>
+    <a class="button primary" href="/admin/students/new">+ Создать кабинет</a>
+  </div>
+</section>
+
+<section class="section homework-overview-section">
+  <nav class="lead-filter" aria-label="Фильтр домашних заданий">
+    <a class="filter-chip {% if selected_view == 'active' %}is-selected{% endif %}" href="/admin/homework?view=active">
+      <span>Активные</span>
+      <strong>{{ homework_counts.active }}</strong>
+    </a>
+    <a class="filter-chip {% if selected_view == 'with_solution' %}is-selected{% endif %}" href="/admin/homework?view=with_solution">
+      <span>С решением</span>
+      <strong>{{ homework_counts.with_solution }}</strong>
+    </a>
+    <a class="filter-chip {% if selected_view == 'completed' %}is-selected{% endif %}" href="/admin/homework?view=completed">
+      <span>Выполненные</span>
+      <strong>{{ homework_counts.completed }}</strong>
+    </a>
+    <a class="filter-chip {% if selected_view == 'all' %}is-selected{% endif %}" href="/admin/homework?view=all">
+      <span>Все</span>
+      <strong>{{ homework_counts.all }}</strong>
+    </a>
+  </nav>
+
+  <div class="homework-board">
+    {% for item in homework_items %}
+      <article class="homework-overview-card {% if item.is_completed %}is-completed{% endif %}">
+        <div class="homework-card-head">
+          <div>
+            <span class="muted">{{ item.student.subject }}</span>
+            <h3>{{ item.title }}</h3>
+          </div>
+          <span class="badge {% if item.is_completed %}ready-for-test{% else %}with-help{% endif %}">
+            {% if item.is_completed %}Выполнено{% else %}Активно{% endif %}
+          </span>
+        </div>
+
+        <div class="homework-meta">
+          <a href="/admin/students/{{ item.student.id }}">{{ item.student.name }}</a>
+          <span>Срок: {{ item.due_date|date }}</span>
+        </div>
+
+        <p>{{ item.description }}</p>
+
+        <div class="homework-link-row">
+          {% if item.attachment_filename %}
+            <a class="file-pill" href="/cabinet/{{ item.student.access_token }}/homework/{{ item.id }}/file" target="_blank" rel="noreferrer">Задание: {{ item.attachment_filename }}</a>
+          {% endif %}
+          {% if item.solution_filename %}
+            <a class="file-pill solution-pill" href="/admin/homework/{{ item.id }}/solution" target="_blank" rel="noreferrer">Решение: {{ item.solution_filename }}</a>
+          {% else %}
+            <span class="muted">Решение пока не прикреплено</span>
+          {% endif %}
+        </div>
+
+        <div class="homework-actions">
+          <a class="button small secondary" href="/admin/students/{{ item.student.id }}">Открыть ученика</a>
+          <form method="post" action="/admin/homework/{{ item.id }}/toggle">
+            <button class="button small secondary" type="submit">
+              {% if item.is_completed %}Вернуть в активные{% else %}Отметить готовым{% endif %}
+            </button>
+          </form>
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <h3>Домашних заданий в этом фильтре нет</h3>
+        <p>Создайте ДЗ в карточке ученика или выберите другой фильтр.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

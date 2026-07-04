@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tutoring_progress
+      POSTGRES_USER: tutoring
+      POSTGRES_PASSWORD: tutoring
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tutoring -d tutoring_progress"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://tutoring:tutoring@db:5432/tutoring_progress
+      PUBLIC_BASE_URL: http://localhost:8000
+      TEACHER_PASSWORD: ${TEACHER_PASSWORD:-change-me}
+      SECRET_KEY: ${SECRET_KEY:-local-dev-secret-change-before-hosting}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      TUTOR_NAME: ${TUTOR_NAME:-Ваш преподаватель}
+      TELEGRAM_URL: ${TELEGRAM_URL:-https://t.me/}
+      WHATSAPP_URL: ${WHATSAPP_URL:-https://wa.me/}
+      UPLOAD_DIR: /app/uploads
+    ports:
+      - "8000:8000"
+    volumes:
+      - homework_uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  homework_uploads:

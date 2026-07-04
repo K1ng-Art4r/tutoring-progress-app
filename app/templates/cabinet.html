@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+
+{% block title %}{{ student.name }} · Кабинет прогресса{% endblock %}
+
+{% block content %}
+<section class="section cabinet-hero">
+  <div>
+    <p class="eyebrow">{{ student.subject }}</p>
+    <h1>{{ student.name }}</h1>
+    <p>{{ student.goal }}</p>
+  </div>
+  <div class="cabinet-status">
+    <span class="muted">Целевая дата</span>
+    <strong>{{ student.target_date|date }}</strong>
+    <span class="muted">Следующий чекпоинт</span>
+    <strong>{{ student.next_checkpoint_date|date }}</strong>
+  </div>
+</section>
+
+{% if uploaded %}
+  <section class="section">
+    <div class="notice success">PDF-решение прикреплено. Преподаватель увидит его в админке.</div>
+  </section>
+{% endif %}
+{% if error == "solution_pdf_only" %}
+  <section class="section">
+    <div class="notice danger">Решение не прикреплено: сейчас поддерживается только PDF.</div>
+  </section>
+{% endif %}
+
+<section class="section overview-band">
+  <div>
+    <span class="muted">Где мы сейчас</span>
+    <p>{{ student.current_status or "Преподаватель скоро заполнит текущий статус." }}</p>
+  </div>
+  <div>
+    <span class="muted">Фокус следующего урока</span>
+    <p>{{ student.next_lesson_focus or "Будет обновлено после ближайшего занятия." }}</p>
+  </div>
+</section>
+
+<section class="section cabinet-grid">
+  <article class="content-block">
+    <h2>Цель и план на 2-4 недели</h2>
+    <div class="field-block">
+      <span class="muted">Текущий уровень</span>
+      <p>{{ student.current_level or "Пока не заполнено." }}</p>
+    </div>
+    <div class="field-block">
+      <span class="muted">Главные пробелы</span>
+      <p>{{ student.top_gaps|nl2br|safe or "Пока не заполнено." }}</p>
+    </div>
+    <div class="field-block">
+      <span class="muted">Фокус</span>
+      <p>{{ student.four_week_focus or "Пока не заполнено." }}</p>
+    </div>
+    <div class="field-block">
+      <span class="muted">Планируемые темы</span>
+      <p>{{ student.planned_topics|nl2br|safe or "Пока не заполнено." }}</p>
+    </div>
+  </article>
+
+  <article class="content-block highlight-block">
+    <h2>Текущее домашнее задание</h2>
+    {% for item in current_homework %}
+      <div class="homework-item">
+        <strong>{{ item.title }}</strong>
+        <p>{{ item.description }}</p>
+        <span class="muted">Срок: {{ item.due_date|date }}</span>
+        {% if item.attachment_filename %}
+          <a class="file-pill" href="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/file" target="_blank" rel="noreferrer">Открыть PDF: {{ item.attachment_filename }}</a>
+        {% endif %}
+        {% if item.solution_filename %}
+          <span class="file-pill solution-pill">Решение отправлено: {{ item.solution_filename }}</span>
+        {% endif %}
+        <details class="solution-panel">
+          <summary class="button small secondary">Прикрепить решение</summary>
+          <form method="post" action="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/solution" class="stacked-form small-gap" enctype="multipart/form-data">
+            <label>
+              PDF с решением
+              <input name="solution_file" type="file" accept="application/pdf,.pdf" required>
+            </label>
+            <button class="button primary" type="submit">Отправить решение</button>
+          </form>
+        </details>
+      </div>
+    {% else %}
+      <p class="muted">Активного домашнего задания сейчас нет.</p>
+    {% endfor %}
+  </article>
+</section>
+
+<section class="section">
+  <div class="section-heading compact">
+    <h2>Статусы тем</h2>
+    <p>Статусы показывают конкретное движение по темам, а не общую похвалу.</p>
+  </div>
+  <div class="topic-grid">
+    {% for topic in student.topics %}
+      <article class="topic-card">
+        <div>
+          <h3>{{ topic.topic }}</h3>
+          <p>{{ topic.comment }}</p>
+        </div>
+        <span class="badge {{ topic.status|status_class }}">{{ topic.status|status_label }}</span>
+        <span class="muted">Обновлено: {{ topic.updated_at|date }}</span>
+      </article>
+    {% else %}
+      <p class="muted">Преподаватель скоро добавит темы.</p>
+    {% endfor %}
+  </div>
+</section>
+
+{% if latest_report %}
+<section class="section latest-report">
+  <div class="section-heading compact">
+    <p class="eyebrow">Последний урок</p>
+    <h2>{{ latest_report.lesson_topic }}</h2>
+    <p>{{ latest_report.lesson_date|date }}</p>
+  </div>
+  <div class="report-fields">
+    <p><b>Что прошли:</b> {{ latest_report.covered }}</p>
+    <p><b>Что получилось:</b> {{ latest_report.worked }}</p>
+    <p><b>Что пока слабое:</b> {{ latest_report.weak }}</p>
+    <p><b>Домашнее задание:</b> {{ latest_report.homework }}</p>
+    <p><b>Комментарий для родителя:</b> {{ latest_report.parent_comment }}</p>
+    {% if latest_report.materials_link %}
+      <p><b>Материалы:</b> <a href="{{ latest_report.materials_link }}" target="_blank" rel="noreferrer">Открыть ссылку</a></p>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+<section class="section cabinet-grid">
+  <article class="content-block">
+    <h2>Все отчеты</h2>
+    <div class="timeline">
+      {% for report in student.reports %}
+        <div class="timeline-item">
+          <span class="timeline-date">{{ report.lesson_date|date }}</span>
+          <h3>{{ report.lesson_topic }}</h3>
+          <p>{{ report.parent_comment }}</p>
+          <details>
+            <summary>Подробности урока</summary>
+            <p><b>Прошли:</b> {{ report.covered }}</p>
+            <p><b>Получилось:</b> {{ report.worked }}</p>
+            <p><b>Слабое:</b> {{ report.weak }}</p>
+            <p><b>ДЗ:</b> {{ report.homework }}</p>
+            {% if report.materials_link %}
+              <p><b>Материалы:</b> <a href="{{ report.materials_link }}" target="_blank" rel="noreferrer">Открыть</a></p>
+            {% endif %}
+          </details>
+        </div>
+      {% else %}
+        <p class="muted">Отчетов пока нет.</p>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="content-block">
+    <h2>Материалы и заметки</h2>
+    <div class="material-list">
+      {% for material in student.materials %}
+        <a class="material-link" href="{{ material.url }}" target="_blank" rel="noreferrer">
+          <span>
+            {{ material.kind }}
+            {% if material.lesson_report %}
+              · {{ material.lesson_report.lesson_date|date }}
+            {% endif %}
+          </span>
+          <strong>{{ material.title }}</strong>
+          {% if material.lesson_report %}
+            <small>{{ material.lesson_report.lesson_topic }}</small>
+          {% endif %}
+        </a>
+      {% else %}
+        <p class="muted">Материалов пока нет.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="section">
+  <div class="section-heading compact">
+    <h2>Месячные чекпоинты</h2>
+  </div>
+  <div class="checkpoint-list">
+    {% for checkpoint in student.checkpoints %}
+      <article class="checkpoint-card">
+        <span class="muted">{{ checkpoint.checkpoint_date|date }}</span>
+        <div class="checkpoint-grid">
+          <p><b>Было:</b> {{ checkpoint.before }}</p>
+          <p><b>Стало:</b> {{ checkpoint.after }}</p>
+          <p><b>Улучшилось:</b> {{ checkpoint.improved }}</p>
+          <p><b>Что еще мешает:</b> {{ checkpoint.blockers }}</p>
+          <p><b>План дальше:</b> {{ checkpoint.next_month_plan }}</p>
+        </div>
+      </article>
+    {% else %}
+      <p class="muted">Первый чекпоинт появится после нескольких занятий.</p>
+    {% endfor %}
+  </div>
+</section>
+
+{% if completed_homework %}
+<section class="section">
+  <details class="completed-homework">
+    <summary>Выполненные домашние задания</summary>
+    {% for item in completed_homework %}
+      <p>
+        <b>{{ item.title }}</b> · {{ item.description }}
+        {% if item.attachment_filename %}
+          <a class="file-pill" href="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/file" target="_blank" rel="noreferrer">PDF</a>
+        {% endif %}
+      </p>
+    {% endfor %}
+  </details>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Вход преподавателя{% endblock %}
+
+{% block content %}
+<section class="section narrow">
+  <div class="auth-box">
+    <p class="eyebrow">Админка</p>
+    <h1>Вход преподавателя</h1>
+    <p>Введите пароль из переменной окружения <code>TEACHER_PASSWORD</code>.</p>
+    {% if error %}
+      <div class="notice danger">Пароль не подошел.</div>
+    {% endif %}
+    <form method="post" action="/admin/login">
+      <label>
+        Пароль
+        <input name="password" type="password" required autofocus>
+      </label>
+      <button class="button primary" type="submit">Войти</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

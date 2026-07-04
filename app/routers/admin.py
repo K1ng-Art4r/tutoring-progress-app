@@ -1,0 +1,767 @@
+from __future__ import annotations
+
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile
+from fastapi.responses import FileResponse, RedirectResponse
+from sqlalchemy import desc, select
+from sqlalchemy.orm import Session, selectinload
+
+from app.auth import admin_redirect, attach_login_cookie, clear_login_cookie, is_admin
+from app.config import settings
+from app.database import get_db
+from app.file_uploads import save_pdf_upload
+from app.models import (
+    STUDENT_STATUSES,
+    Checkpoint,
+    Homework,
+    LEAD_STATUSES,
+    LessonReport,
+    Material,
+    Student,
+    TopicProgress,
+    Lead,
+    TOPIC_STATUSES,
+    make_access_code,
+)
+from app.options import (
+    GOAL_OPTIONS,
+    HOMEWORK_FORMAT_OPTIONS,
+    MATERIAL_KIND_OPTIONS,
+    SUBJECT_OPTIONS,
+)
+from app.view_helpers import templates
+
+router = APIRouter(prefix="/admin")
+
+
+def _parse_date(value: str | None) -> date | None:
+    if not value:
+        return None
+    return date.fromisoformat(value)
+
+
+def _require_admin(request: Request):
+    if not is_admin(request):
+        return admin_redirect()
+    return None
+
+
+def _student_or_redirect(student_id: int, db: Session) -> Student | None:
+    return db.get(Student, student_id)
+
+
+def _redirect_to_student(student_id: int) -> RedirectResponse:
+    return RedirectResponse(f"/admin/students/{student_id}", status_code=303)
+
+
+def _save_homework_pdf(student_id: int, upload: UploadFile | None) -> tuple[str, str, str] | None:
+    return save_pdf_upload(student_id, upload, "homework", "homework_pdf_only")
+
+
+def _lead_or_redirect(lead_id: int, db: Session) -> Lead | None:
+    return db.get(Lead, lead_id)
+
+
+def _make_unique_access_code(db: Session) -> str:
+    while True:
+        code = make_access_code()
+        exists = db.scalar(select(Student.id).where(Student.access_code == code).limit(1))
+        if exists is None:
+            return code
+
+
+@router.get("/login")
+def login_page(request: Request, error: int | None = None):
+    if is_admin(request):
+        return RedirectResponse("/admin", status_code=303)
+    return templates.TemplateResponse(
+        request,
+        "admin_login.html",
+        {
+            "request": request,
+            "error": error == 1,
+            "is_admin": False,
+            "noindex": True,
+        },
+    )
+
+
+@router.post("/login")
+def login(password: Annotated[str, Form()]):
+    if password != settings.teacher_password:
+        return RedirectResponse("/admin/login?error=1", status_code=303)
+    response = RedirectResponse("/admin", status_code=303)
+    attach_login_cookie(response)
+    return response
+
+
+@router.post("/logout")
+def logout():
+    response = RedirectResponse("/", status_code=303)
+    clear_login_cookie(response)
+    return response
+
+
+@router.get("")
+def dashboard(
+    request: Request,
+    lead_status: list[str] | None = Query(None),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+
+    students = list(db.scalars(select(Student).order_by(Student.status, Student.name)))
+    all_leads = list(db.scalars(select(Lead).order_by(desc(Lead.created_at))))
+    selected_lead_statuses = [
+        status for status in (lead_status or ["new", "contacted"]) if status in LEAD_STATUSES
+    ]
+    if not selected_lead_statuses:
+        selected_lead_statuses = ["new", "contacted"]
+    leads = [lead for lead in all_leads if lead.status in selected_lead_statuses]
+    lead_counts = {
+        status: sum(1 for lead in all_leads if lead.status == status)
+        for status in LEAD_STATUSES
+    }
+    latest_reports: dict[int, LessonReport | None] = {}
+    stale_student_ids: set[int] = set()
+
+    for student in students:
+        report = db.scalar(
+            select(LessonReport)
+            .where(LessonReport.student_id == student.id)
+            .order_by(desc(LessonReport.lesson_date), desc(LessonReport.created_at))
+            .limit(1)
+        )
+        latest_reports[student.id] = report
+        if student.status == "active":
+            if report is None or report.lesson_date < date.today() - timedelta(days=7):
+                stale_student_ids.add(student.id)
+
+    return templates.TemplateResponse(
+        request,
+        "admin_dashboard.html",
+        {
+            "request": request,
+            "students": students,
+            "leads": leads,
+            "lead_statuses": LEAD_STATUSES,
+            "selected_lead_statuses": selected_lead_statuses,
+            "lead_counts": lead_counts,
+            "selected_leads_count": len(leads),
+            "latest_reports": latest_reports,
+            "stale_student_ids": stale_student_ids,
+            "active_count": sum(1 for student in students if student.status == "active"),
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.get("/homework")
+def homework_overview(
+    request: Request,
+    view: str = Query("active"),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+
+    all_homework = list(
+        db.scalars(
+            select(Homework)
+            .join(Student)
+            .where(Student.status != "archived")
+            .options(selectinload(Homework.student))
+            .order_by(
+                Homework.is_completed.asc(),
+                Homework.due_date.asc().nullslast(),
+                desc(Homework.created_at),
+            )
+        )
+    )
+    homework_counts = {
+        "all": len(all_homework),
+        "active": sum(1 for item in all_homework if not item.is_completed),
+        "completed": sum(1 for item in all_homework if item.is_completed),
+        "with_solution": sum(1 for item in all_homework if item.solution_filename),
+    }
+    if view == "completed":
+        homework_items = [item for item in all_homework if item.is_completed]
+    elif view == "with_solution":
+        homework_items = [item for item in all_homework if item.solution_filename]
+    elif view == "all":
+        homework_items = all_homework
+    else:
+        view = "active"
+        homework_items = [item for item in all_homework if not item.is_completed]
+
+    return templates.TemplateResponse(
+        request,
+        "admin_homework.html",
+        {
+            "request": request,
+            "homework_items": homework_items,
+            "homework_counts": homework_counts,
+            "selected_view": view,
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.post("/leads/{lead_id}/status")
+def update_lead_status(
+    lead_id: int,
+    request: Request,
+    status: Annotated[str, Form()],
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    lead = db.get(Lead, lead_id)
+    if lead:
+        lead.status = status if status in LEAD_STATUSES else lead.status
+        db.commit()
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/leads/{lead_id}/reject")
+def reject_lead(lead_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    lead = _lead_or_redirect(lead_id, db)
+    if lead:
+        lead.status = "rejected"
+        db.commit()
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/leads/{lead_id}/contacted")
+def mark_lead_contacted(lead_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    lead = _lead_or_redirect(lead_id, db)
+    if lead and lead.status == "new":
+        lead.status = "contacted"
+        db.commit()
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/leads/{lead_id}/approve")
+def approve_lead(lead_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    lead = _lead_or_redirect(lead_id, db)
+    if lead:
+        return RedirectResponse(f"/admin/students/new?lead_id={lead.id}", status_code=303)
+    return RedirectResponse("/admin", status_code=303)
+
+
+@router.get("/students/new")
+def new_student_page(
+    request: Request,
+    lead_id: int | None = None,
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    prefill = {}
+    if lead_id:
+        lead = db.get(Lead, lead_id)
+        if lead:
+            prefill = {
+                "lead_id": str(lead.id),
+                "parent_name": lead.parent_name,
+                "parent_contact": lead.contact,
+                "subject": lead.subject,
+                "goal": lead.goal,
+            }
+    return templates.TemplateResponse(
+        request,
+        "student_form.html",
+        {
+            "request": request,
+            "student": None,
+            "action": "/admin/students/new",
+            "title": "Новый ученик",
+            "submit_label": "Создать кабинет",
+            "prefill": prefill,
+            "student_statuses": STUDENT_STATUSES,
+            "subject_options": SUBJECT_OPTIONS,
+            "goal_options": GOAL_OPTIONS,
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.post("/students/new")
+def create_student(
+    request: Request,
+    name: Annotated[str, Form()],
+    parent_name: Annotated[str, Form()] = "",
+    parent_contact: Annotated[str, Form()] = "",
+    subject: Annotated[str, Form()] = "",
+    goal: Annotated[str, Form()] = "",
+    target_date: Annotated[str, Form()] = "",
+    current_status: Annotated[str, Form()] = "",
+    current_level: Annotated[str, Form()] = "",
+    top_gaps: Annotated[str, Form()] = "",
+    four_week_focus: Annotated[str, Form()] = "",
+    planned_topics: Annotated[str, Form()] = "",
+    next_checkpoint_date: Annotated[str, Form()] = "",
+    next_lesson_focus: Annotated[str, Form()] = "",
+    status: Annotated[str, Form()] = "active",
+    lead_id: Annotated[str, Form()] = "",
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = Student(
+        access_code=_make_unique_access_code(db),
+        name=name.strip(),
+        parent_name=parent_name.strip(),
+        parent_contact=parent_contact.strip(),
+        subject=subject.strip(),
+        goal=goal.strip(),
+        target_date=_parse_date(target_date),
+        current_status=current_status.strip(),
+        current_level=current_level.strip(),
+        top_gaps=top_gaps.strip(),
+        four_week_focus=four_week_focus.strip(),
+        planned_topics=planned_topics.strip(),
+        next_checkpoint_date=_parse_date(next_checkpoint_date),
+        next_lesson_focus=next_lesson_focus.strip(),
+        status=status if status in STUDENT_STATUSES else "active",
+    )
+    db.add(student)
+    if lead_id.strip().isdigit():
+        lead = db.get(Lead, int(lead_id))
+        if lead:
+            lead.status = "approved"
+    db.commit()
+    db.refresh(student)
+    return RedirectResponse(f"/admin/students/{student.id}?created=1", status_code=303)
+
+
+@router.get("/students/{student_id}")
+def student_detail(
+    student_id: int,
+    request: Request,
+    created: int | None = None,
+    error: str | None = None,
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+
+    student = db.scalar(
+        select(Student)
+        .where(Student.id == student_id)
+        .options(
+            selectinload(Student.topics),
+            selectinload(Student.reports),
+            selectinload(Student.homework_items),
+            selectinload(Student.materials).selectinload(Material.lesson_report),
+            selectinload(Student.checkpoints),
+        )
+    )
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "admin_student_detail.html",
+        {
+            "request": request,
+            "student": student,
+            "topic_statuses": TOPIC_STATUSES,
+            "student_statuses": STUDENT_STATUSES,
+            "created": created == 1,
+            "error": error,
+            "today": date.today(),
+            "material_kind_options": MATERIAL_KIND_OPTIONS,
+            "homework_format_options": HOMEWORK_FORMAT_OPTIONS,
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.get("/students/{student_id}/edit")
+def edit_student_page(student_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = db.get(Student, student_id)
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    return templates.TemplateResponse(
+        request,
+        "student_form.html",
+        {
+            "request": request,
+            "student": student,
+            "action": f"/admin/students/{student.id}/edit",
+            "title": "Редактировать кабинет",
+            "submit_label": "Сохранить",
+            "prefill": {},
+            "student_statuses": STUDENT_STATUSES,
+            "subject_options": SUBJECT_OPTIONS,
+            "goal_options": GOAL_OPTIONS,
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.post("/students/{student_id}/edit")
+def update_student(
+    student_id: int,
+    request: Request,
+    name: Annotated[str, Form()],
+    parent_name: Annotated[str, Form()] = "",
+    parent_contact: Annotated[str, Form()] = "",
+    subject: Annotated[str, Form()] = "",
+    goal: Annotated[str, Form()] = "",
+    target_date: Annotated[str, Form()] = "",
+    current_status: Annotated[str, Form()] = "",
+    current_level: Annotated[str, Form()] = "",
+    top_gaps: Annotated[str, Form()] = "",
+    four_week_focus: Annotated[str, Form()] = "",
+    planned_topics: Annotated[str, Form()] = "",
+    next_checkpoint_date: Annotated[str, Form()] = "",
+    next_lesson_focus: Annotated[str, Form()] = "",
+    status: Annotated[str, Form()] = "active",
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = db.get(Student, student_id)
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    student.name = name.strip()
+    student.parent_name = parent_name.strip()
+    student.parent_contact = parent_contact.strip()
+    student.subject = subject.strip()
+    student.goal = goal.strip()
+    student.target_date = _parse_date(target_date)
+    student.current_status = current_status.strip()
+    student.current_level = current_level.strip()
+    student.top_gaps = top_gaps.strip()
+    student.four_week_focus = four_week_focus.strip()
+    student.planned_topics = planned_topics.strip()
+    student.next_checkpoint_date = _parse_date(next_checkpoint_date)
+    student.next_lesson_focus = next_lesson_focus.strip()
+    student.status = status if status in STUDENT_STATUSES else "active"
+    db.commit()
+    return _redirect_to_student(student.id)
+
+
+@router.post("/students/{student_id}/topics")
+def add_topic(
+    student_id: int,
+    request: Request,
+    topic: Annotated[str, Form()],
+    status: Annotated[str, Form()] = "not_started",
+    comment: Annotated[str, Form()] = "",
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = _student_or_redirect(student_id, db)
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    db.add(
+        TopicProgress(
+            student_id=student.id,
+            topic=topic.strip(),
+            status=status if status in TOPIC_STATUSES else "not_started",
+            comment=comment.strip(),
+        )
+    )
+    db.commit()
+    return _redirect_to_student(student.id)
+
+
+@router.post("/topics/{topic_id}/update")
+def update_topic(
+    topic_id: int,
+    request: Request,
+    topic: Annotated[str, Form()],
+    status: Annotated[str, Form()] = "not_started",
+    comment: Annotated[str, Form()] = "",
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    item = db.get(TopicProgress, topic_id)
+    if item is None:
+        return RedirectResponse("/admin", status_code=303)
+    item.topic = topic.strip()
+    item.status = status if status in TOPIC_STATUSES else item.status
+    item.comment = comment.strip()
+    db.commit()
+    return _redirect_to_student(item.student_id)
+
+
+@router.post("/students/{student_id}/reports")
+def add_report(
+    student_id: int,
+    request: Request,
+    lesson_date: Annotated[str, Form()],
+    lesson_topic: Annotated[str, Form()],
+    covered: Annotated[str, Form()],
+    worked: Annotated[str, Form()],
+    weak: Annotated[str, Form()],
+    homework: Annotated[str, Form()],
+    parent_comment: Annotated[str, Form()],
+    homework_completed: Annotated[str | None, Form()] = None,
+    materials_link: Annotated[str, Form()] = "",
+    homework_file: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = _student_or_redirect(student_id, db)
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    required_values = [lesson_date, lesson_topic, covered, worked, weak, homework, parent_comment]
+    if any(not value.strip() for value in required_values):
+        return RedirectResponse(f"/admin/students/{student.id}?error=empty_report", status_code=303)
+
+    report = LessonReport(
+        student_id=student.id,
+        lesson_date=date.fromisoformat(lesson_date),
+        lesson_topic=lesson_topic.strip(),
+        covered=covered.strip(),
+        worked=worked.strip(),
+        weak=weak.strip(),
+        homework=homework.strip(),
+        homework_completed=homework_completed == "on",
+        parent_comment=parent_comment.strip(),
+        materials_link=materials_link.strip(),
+    )
+    db.add(report)
+    homework_attachment = None
+    try:
+        homework_attachment = _save_homework_pdf(student.id, homework_file)
+    except ValueError:
+        return RedirectResponse(f"/admin/students/{student.id}?error=homework_pdf_only", status_code=303)
+
+    if homework.strip():
+        homework_item = Homework(
+            student_id=student.id,
+            title=f"Домашнее задание: {lesson_topic.strip()}",
+            description=homework.strip(),
+        )
+        if homework_attachment:
+            (
+                homework_item.attachment_filename,
+                homework_item.attachment_storage_path,
+                homework_item.attachment_content_type,
+            ) = homework_attachment
+        db.add(
+            homework_item
+        )
+    db.flush()
+    if materials_link.strip():
+        db.add(
+            Material(
+                student_id=student.id,
+                lesson_report_id=report.id,
+                title=f"{date.fromisoformat(lesson_date).strftime('%d.%m.%Y')} · {lesson_topic.strip()}",
+                kind="Онлайн-доска / конспект",
+                url=materials_link.strip(),
+            )
+        )
+    db.commit()
+    return _redirect_to_student(student.id)
+
+
+@router.post("/students/{student_id}/homework")
+def add_homework(
+    student_id: int,
+    request: Request,
+    title: Annotated[str, Form()],
+    description: Annotated[str, Form()],
+    due_date: Annotated[str, Form()] = "",
+    homework_file: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = _student_or_redirect(student_id, db)
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    homework_item = Homework(
+        student_id=student.id,
+        title=title.strip(),
+        description=description.strip(),
+        due_date=_parse_date(due_date),
+    )
+    try:
+        homework_attachment = _save_homework_pdf(student.id, homework_file)
+    except ValueError:
+        return RedirectResponse(f"/admin/students/{student.id}?error=homework_pdf_only", status_code=303)
+    if homework_attachment:
+        (
+            homework_item.attachment_filename,
+            homework_item.attachment_storage_path,
+            homework_item.attachment_content_type,
+        ) = homework_attachment
+    db.add(homework_item)
+    db.commit()
+    return _redirect_to_student(student.id)
+
+
+@router.post("/homework/{homework_id}/edit")
+def edit_homework(
+    homework_id: int,
+    request: Request,
+    title: Annotated[str, Form()],
+    description: Annotated[str, Form()],
+    due_date: Annotated[str, Form()] = "",
+    is_completed: Annotated[str | None, Form()] = None,
+    homework_file: UploadFile | None = File(None),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    item = db.get(Homework, homework_id)
+    if item is None:
+        return RedirectResponse("/admin", status_code=303)
+    item.title = title.strip()
+    item.description = description.strip()
+    item.due_date = _parse_date(due_date)
+    item.is_completed = is_completed == "on"
+    item.completed_at = datetime.utcnow() if item.is_completed else None
+    try:
+        homework_attachment = _save_homework_pdf(item.student_id, homework_file)
+    except ValueError:
+        return RedirectResponse(f"/admin/students/{item.student_id}?error=homework_pdf_only", status_code=303)
+    if homework_attachment:
+        (
+            item.attachment_filename,
+            item.attachment_storage_path,
+            item.attachment_content_type,
+        ) = homework_attachment
+    db.commit()
+    return _redirect_to_student(item.student_id)
+
+
+@router.get("/homework/{homework_id}/solution")
+def homework_solution_file(homework_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    item = db.get(Homework, homework_id)
+    if (
+        item is None
+        or not item.solution_storage_path
+        or not item.solution_filename
+        or not Path(item.solution_storage_path).exists()
+    ):
+        raise HTTPException(status_code=404)
+    return FileResponse(
+        item.solution_storage_path,
+        media_type=item.solution_content_type or "application/pdf",
+        filename=item.solution_filename,
+    )
+
+
+@router.post("/homework/{homework_id}/toggle")
+def toggle_homework(homework_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    item = db.get(Homework, homework_id)
+    if item is None:
+        return RedirectResponse("/admin", status_code=303)
+    item.is_completed = not item.is_completed
+    item.completed_at = datetime.utcnow() if item.is_completed else None
+    db.commit()
+    return _redirect_to_student(item.student_id)
+
+
+@router.post("/students/{student_id}/materials")
+def add_material(
+    student_id: int,
+    request: Request,
+    title: Annotated[str, Form()],
+    url: Annotated[str, Form()],
+    kind: Annotated[str, Form()] = "Ссылка",
+    material_date: Annotated[str, Form()] = "",
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = _student_or_redirect(student_id, db)
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    display_title = title.strip()
+    if material_date:
+        display_title = f"{date.fromisoformat(material_date).strftime('%d.%m.%Y')} · {display_title}"
+    db.add(
+        Material(
+            student_id=student.id,
+            title=display_title,
+            kind=kind.strip() or "Ссылка",
+            url=url.strip(),
+        )
+    )
+    db.commit()
+    return _redirect_to_student(student.id)
+
+
+@router.post("/students/{student_id}/checkpoints")
+def add_checkpoint(
+    student_id: int,
+    request: Request,
+    checkpoint_date: Annotated[str, Form()],
+    before: Annotated[str, Form()],
+    after: Annotated[str, Form()],
+    improved: Annotated[str, Form()],
+    blockers: Annotated[str, Form()],
+    next_month_plan: Annotated[str, Form()],
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    student = _student_or_redirect(student_id, db)
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    db.add(
+        Checkpoint(
+            student_id=student.id,
+            checkpoint_date=date.fromisoformat(checkpoint_date),
+            before=before.strip(),
+            after=after.strip(),
+            improved=improved.strip(),
+            blockers=blockers.strip(),
+            next_month_plan=next_month_plan.strip(),
+        )
+    )
+    db.commit()
+    return _redirect_to_student(student.id)

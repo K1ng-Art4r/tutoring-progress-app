@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% if noindex %}
+      <meta name="robots" content="noindex,nofollow">
+    {% endif %}
+    <title>{% block title %}{{ settings.app_name }}{% endblock %}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/">
+        <span class="brand-mark"><span>Σ</span></span>
+        <span class="brand-text">Progress Tutor</span>
+      </a>
+      <nav class="topnav" aria-label="Основная навигация">
+        <a href="/">Главная</a>
+        <a href="/about">О преподавателе</a>
+        {% if is_admin %}
+          <a href="/admin">Админка</a>
+          <a href="/admin/homework">Все ДЗ</a>
+          <form method="post" action="/admin/logout" class="inline-form">
+            <button class="link-button" type="submit">Выйти</button>
+          </form>
+        {% else %}
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">Войти в личный кабинет</button>
+            <div class="nav-dropdown-menu">
+              <a href="/admin/login">Вход для преподавателя</a>
+              <a href="/cabinet/login">Вход для ученика</a>
+            </div>
+          </div>
+        {% endif %}
+      </nav>
+    </header>
+
+    <main>
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+      <span>Concierge MVP для индивидуального обучения: план, отчеты, домашние задания и прогресс.</span>
+    </footer>
+  </body>
+</html>

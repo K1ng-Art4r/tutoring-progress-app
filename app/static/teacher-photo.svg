@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1100" viewBox="0 0 900 1100" role="img" aria-label="Место для фото преподавателя">
+  <rect width="900" height="1100" fill="#e5f4ea"/>
+  <circle cx="450" cy="356" r="150" fill="#ffffff"/>
+  <path d="M190 900c35-210 160-318 260-318s225 108 260 318" fill="#ffffff"/>
+  <path d="M226 902c42-158 128-238 224-238s182 80 224 238" fill="#177245" opacity=".16"/>
+  <path d="M230 160h440v86H230z" fill="#177245" opacity=".12"/>
+  <text x="450" y="210" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#0e5d36">Фото преподавателя</text>
+  <text x="450" y="1000" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" fill="#637167">Замените файл app/static/teacher-photo.svg на реальное фото</text>
+</svg>

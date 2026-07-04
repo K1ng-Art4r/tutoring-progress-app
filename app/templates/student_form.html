@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<section class="section narrow-form">
+  <div class="section-heading compact">
+    <p class="eyebrow">Кабинет ученика</p>
+    <h1>{{ title }}</h1>
+  </div>
+
+  <form method="post" action="{{ action }}" class="stacked-form">
+    {% if prefill.get('lead_id') %}
+      <input type="hidden" name="lead_id" value="{{ prefill.get('lead_id') }}">
+    {% endif %}
+    <div class="form-grid">
+      <label>
+        Имя ученика
+        <input name="name" required value="{{ student.name if student else prefill.get('name', '') }}">
+      </label>
+      {% set selected_subject = student.subject if student else prefill.get('subject', '') %}
+      <label>
+        Предмет
+        <select name="subject" required>
+          <option value="">Выберите предмет</option>
+          {% if selected_subject and selected_subject not in subject_options %}
+            <option value="{{ selected_subject }}" selected>{{ selected_subject }}</option>
+          {% endif %}
+          {% for subject in subject_options %}
+            <option value="{{ subject }}" {% if selected_subject == subject %}selected{% endif %}>{{ subject }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        Имя родителя
+        <input name="parent_name" value="{{ student.parent_name if student else prefill.get('parent_name', '') }}">
+      </label>
+      <label>
+        Контакт родителя
+        <input name="parent_contact" value="{{ student.parent_contact if student else prefill.get('parent_contact', '') }}" placeholder="@telegram или телефон">
+      </label>
+      <label>
+        Целевая дата
+        <input name="target_date" type="date" value="{{ student.target_date.isoformat() if student and student.target_date else '' }}">
+      </label>
+      <label>
+        Следующий чекпоинт
+        <input name="next_checkpoint_date" type="date" value="{{ student.next_checkpoint_date.isoformat() if student and student.next_checkpoint_date else '' }}">
+      </label>
+      <label>
+        Статус ученика
+        <select name="status">
+          {% for status in student_statuses %}
+            <option value="{{ status }}" {% if student and student.status == status %}selected{% endif %}>{{ status|status_label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+
+    <label>
+      Шаблон цели
+      <select onchange="if (!this.form.goal.value.trim()) this.form.goal.value = this.value">
+        <option value="">Не заполнять автоматически</option>
+        {% for goal_option in goal_options %}
+          <option value="{{ goal_option }}">{{ goal_option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+
+    <label>
+      Главная цель
+      <textarea name="goal" required rows="3">{{ student.goal if student else prefill.get('goal', '') }}</textarea>
+    </label>
+    <label>
+      Текущий статус
+      <textarea name="current_status" rows="3">{{ student.current_status if student else '' }}</textarea>
+    </label>
+    <label>
+      Текущий уровень
+      <textarea name="current_level" rows="3">{{ student.current_level if student else '' }}</textarea>
+    </label>
+    <label>
+      Главные пробелы
+      <textarea name="top_gaps" rows="4">{{ student.top_gaps if student else '' }}</textarea>
+    </label>
+    <label>
+      Фокус на 2-4 недели
+      <textarea name="four_week_focus" rows="3">{{ student.four_week_focus if student else '' }}</textarea>
+    </label>
+    <label>
+      Планируемые темы
+      <textarea name="planned_topics" rows="5">{{ student.planned_topics if student else '' }}</textarea>
+    </label>
+    <label>
+      Фокус следующего урока
+      <textarea name="next_lesson_focus" rows="2">{{ student.next_lesson_focus if student else '' }}</textarea>
+    </label>
+
+    <div class="button-row">
+      <button class="button primary" type="submit">{{ submit_label }}</button>
+      <a class="button secondary" href="{{ '/admin/students/' ~ student.id if student else '/admin' }}">Отмена</a>
+    </div>
+  </form>
+</section>
+{% endblock %}

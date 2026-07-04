@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Индивидуальные занятия с видимым прогрессом{% endblock %}
+
+{% block content %}
+<section class="hero section">
+  <div class="hero-copy">
+    <p class="eyebrow">Математика и информатика · 1-на-1 · личный кабинет</p>
+    <h1>Индивидуальные занятия с понятным планом и видимым прогрессом после каждого урока</h1>
+    <p class="hero-text">
+      После диагностики родитель и ученик получают 10-значный код от личного кабинета: цель, текущий уровень,
+      слабые места, план на 4 недели, домашние задания и короткие отчеты после уроков.
+    </p>
+    <div class="button-row">
+      <a class="button primary" href="#contact">Оставить заявку</a>
+      <a class="button secondary" href="#format">Посмотреть формат</a>
+    </div>
+  </div>
+
+  <div class="product-preview" aria-label="Пример кабинета ученика">
+    <div class="preview-header">
+      <span>Анна К. · ОГЭ</span>
+      <strong>Следующий фокус: квадратные уравнения</strong>
+    </div>
+    <div class="preview-grid">
+      <div>
+        <span class="metric-label">Текущий статус</span>
+        <strong>Решает с помощью</strong>
+      </div>
+      <div>
+        <span class="metric-label">План</span>
+        <strong>4 недели</strong>
+      </div>
+      <div>
+        <span class="metric-label">ДЗ</span>
+        <strong>8 задач</strong>
+      </div>
+    </div>
+    <div class="preview-topic">
+      <span>Квадратные уравнения</span>
+      <span class="progress-line"><i style="width: 62%"></i></span>
+    </div>
+    <div class="preview-topic">
+      <span>Проценты</span>
+      <span class="progress-line"><i style="width: 38%"></i></span>
+    </div>
+    <div class="preview-report">
+      <b>Последний урок</b>
+      <p>Разобрали алгоритм, нашли ошибки в знаках, выдали конкретное ДЗ.</p>
+    </div>
+  </div>
+</section>
+
+<section id="format" class="section band">
+  <div class="section-heading">
+    <p class="eyebrow">Как устроено</p>
+    <h2>Не просто «был урок», а понятная картина движения</h2>
+  </div>
+  <div class="feature-grid">
+    <article class="feature-card">
+      <span class="feature-icon">1</span>
+      <h3>Диагностика</h3>
+      <p>Определяем цель, текущий уровень, главные пробелы и ближайший шаг.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">2</span>
+      <h3>План на 2-4 недели</h3>
+      <p>Родитель видит, какие темы закрываем сейчас и когда будет следующий чекпоинт.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">3</span>
+      <h3>Отчет после урока</h3>
+      <p>Что прошли, что получилось, что пока слабое, какое домашнее задание выдано.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">4</span>
+      <h3>Статусы тем</h3>
+      <p>Прогресс фиксируется конкретно: объяснено, с помощью, самостоятельно, готово к проверке.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section two-column">
+  <div>
+    <p class="eyebrow">Для кого</p>
+    <h2>Для родителей, которым важно понимать, что занятия реально двигают ребенка</h2>
+  </div>
+  <div class="plain-list">
+    <p>Подходит, если ученик готовится к ОГЭ / ЕГЭ, догоняет школьную программу или теряется в конкретных темах.</p>
+    <p>В первой версии все ведется вручную преподавателем: без саморегистрации, платежей, чата и лишней платформенной сложности.</p>
+  </div>
+</section>
+
+<section id="contact" class="section contact-section">
+  <div class="section-heading">
+    <p class="eyebrow">Заявка</p>
+    <h2>Опишите ситуацию ученика</h2>
+    <p>Регистрация не нужна. После сообщения можно договориться о диагностике и получить код от личного кабинета.</p>
+  </div>
+
+  {% if sent %}
+    <div class="notice success">Заявка сохранена. Она появится в админке преподавателя.</div>
+  {% endif %}
+
+  <form method="post" action="/request" class="request-form">
+    <label>
+      Имя родителя
+      <input name="parent_name" required placeholder="Мария">
+    </label>
+    <label>
+      Класс ученика
+      <select name="student_class" required>
+        <option value="">Выберите класс</option>
+        {% for class_option in class_options %}
+          <option value="{{ class_option }}">{{ class_option }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Предмет
+      <select name="subject" required>
+        <option value="">Выберите предмет</option>
+        {% for subject in subject_options %}
+          <option value="{{ subject }}">{{ subject }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Цель
+      <select name="goal" required>
+        <option value="">Выберите цель</option>
+        {% for goal in goal_options %}
+          <option value="{{ goal }}">{{ goal }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Детали ситуации
+      <textarea name="goal_details" rows="4" placeholder="Например: слабые текстовые задачи, нужна уверенность на контрольных, непонятна конкретная тема"></textarea>
+    </label>
+    <label>
+      Контакт для связи
+      <input name="contact" required placeholder="Telegram, WhatsApp или телефон">
+    </label>
+    <button class="button primary" type="submit">Отправить заявку</button>
+  </form>
+</section>
+{% endblock %}
