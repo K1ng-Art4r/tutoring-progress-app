@@ -356,6 +356,7 @@ def diagnostic_review_page(
             "reviewed": reviewed == 1,
             "is_admin": True,
             "noindex": True,
+            "enable_mathjax": True,
         },
     )
 

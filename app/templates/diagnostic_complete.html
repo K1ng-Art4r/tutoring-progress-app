@@ -85,7 +85,7 @@
           </div>
           <div class="solution-explanation">
             <span class="muted">Решение</span>
-            <p>{{ task.solution }}</p>
+            <p>{{ task.solution|nl2br|safe }}</p>
           </div>
         </article>
       {% endfor %}

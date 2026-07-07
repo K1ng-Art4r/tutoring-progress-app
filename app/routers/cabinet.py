@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.auth import attach_student_login_cookie, student_access_token_from_cookie
 from app.database import get_db
 from app.diagnostic_logic import finalize_attempt, score_answer
 from app.file_uploads import save_diagnostic_solution_upload, save_pdf_upload
@@ -90,7 +91,18 @@ def _first_unsaved_task_position(
 
 
 @router.get("/login", response_class=HTMLResponse)
-def cabinet_login_page(request: Request, error: int | None = None):
+def cabinet_login_page(
+    request: Request,
+    error: int | None = None,
+    db: Session = Depends(get_db),
+):
+    if not error:
+        saved_access_token = student_access_token_from_cookie(request)
+        if saved_access_token:
+            student = _student_by_token(saved_access_token, db)
+            if student is not None:
+                return RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
+
     return templates.TemplateResponse(
         request,
         "cabinet_login.html",
@@ -116,7 +128,9 @@ def cabinet_login(code: str = Form(...), db: Session = Depends(get_db)):
     )
     if student is None:
         return RedirectResponse("/cabinet/login?error=1", status_code=303)
-    return RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
+    response = RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
+    attach_student_login_cookie(response, student.access_token)
+    return response
 
 
 @router.get("/{access_token}", response_class=HTMLResponse)
@@ -170,7 +184,7 @@ def student_cabinet(
     for attempt in diagnostic_attempts:
         latest_diagnostic_attempts.setdefault(attempt.work_id, attempt)
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request,
         "cabinet.html",
         {
@@ -187,6 +201,8 @@ def student_cabinet(
             "noindex": True,
         },
     )
+    attach_student_login_cookie(response, student.access_token)
+    return response
 
 
 @router.get("/{access_token}/homework/{homework_id}/file")
@@ -271,7 +287,7 @@ def diagnostic_work_page(
 
     attempt = _latest_attempt(student.id, work.id, db)
     if attempt is None:
-        return templates.TemplateResponse(
+        response = templates.TemplateResponse(
             request,
             "diagnostic_intro.html",
             {
@@ -281,8 +297,11 @@ def diagnostic_work_page(
                 "tasks": work.tasks,
                 "is_admin": False,
                 "noindex": True,
+                "enable_mathjax": True,
             },
         )
+        attach_student_login_cookie(response, student.access_token)
+        return response
 
     if _finish_expired_attempt(attempt):
         db.commit()
@@ -290,7 +309,7 @@ def diagnostic_work_page(
 
     if attempt.status != "in_progress":
         answers_by_task = {answer.task_id: answer for answer in attempt.answers}
-        return templates.TemplateResponse(
+        response = templates.TemplateResponse(
             request,
             "diagnostic_complete.html",
             {
@@ -303,11 +322,14 @@ def diagnostic_work_page(
                 "finished": finished == 1,
                 "is_admin": False,
                 "noindex": True,
+                "enable_mathjax": True,
             },
         )
+        attach_student_login_cookie(response, student.access_token)
+        return response
 
     answers_by_task = {answer.task_id: answer for answer in attempt.answers}
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request,
         "diagnostic_work.html",
         {
@@ -323,8 +345,11 @@ def diagnostic_work_page(
             "error": error,
             "is_admin": False,
             "noindex": True,
+            "enable_mathjax": True,
         },
     )
+    attach_student_login_cookie(response, student.access_token)
+    return response
 
 
 @router.post("/{access_token}/diagnostics/{work_slug}/start")
