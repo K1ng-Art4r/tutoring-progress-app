@@ -25,11 +25,17 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background: linear-gradient(180deg, #fbfffb 0%, var(--bg) 34%, #ffffff 100%);
   color: var(--text);
   line-height: 1.5;
+  overflow-x: hidden;
 }
 
 a {
@@ -81,6 +87,7 @@ input,
 textarea,
 select {
   width: 100%;
+  max-width: 100%;
   min-height: 42px;
   border: 1px solid #cfd7d1;
   border-radius: 7px;
@@ -92,6 +99,17 @@ select {
 
 textarea {
   resize: vertical;
+}
+
+button {
+  font: inherit;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 label {
@@ -138,6 +156,30 @@ details summary {
   font-weight: 700;
 }
 
+main,
+section,
+article,
+aside,
+form,
+.section > *,
+.admin-panel > *,
+.content-block > *,
+.summary-block > *,
+.feature-card > *,
+.about-card > *,
+.achievement-card > *,
+.topic-card > *,
+.report-card > *,
+.checkpoint-card > *,
+.diagnostic-card > *,
+.diagnostic-admin-card > *,
+.review-task-card > *,
+.pricing-card > *,
+.lead-card > *,
+.homework-item > * {
+  min-width: 0;
+}
+
 .topbar {
   position: sticky;
   top: 0;
@@ -159,6 +201,7 @@ details summary {
   gap: 10px;
   color: var(--text);
   font-weight: 900;
+  flex: 0 0 auto;
 }
 
 .brand:hover {
@@ -193,6 +236,7 @@ details summary {
   gap: 6px;
   color: var(--muted);
   font-weight: 650;
+  min-width: 0;
 }
 
 .topnav > a,
@@ -351,6 +395,7 @@ details summary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
   min-height: 42px;
   border: 1px solid transparent;
   border-radius: 7px;
@@ -753,11 +798,13 @@ details summary {
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 18px;
+  max-width: 100%;
 }
 
 .filter-chip {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 8px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -922,6 +969,7 @@ details summary {
 
 .table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -1916,6 +1964,42 @@ details summary {
   border-top: 1px solid var(--border);
 }
 
+@media (max-width: 1080px) {
+  .topbar {
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .topnav {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.8fr);
+    gap: 28px;
+  }
+
+  .feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-grid,
+  .achievement-grid,
+  .topic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .about-main,
+  .achievement-wide {
+    grid-column: span 2;
+  }
+
+  .topic-homework-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 920px) {
   h1 {
     font-size: 38px;
@@ -1959,7 +2043,7 @@ details summary {
   }
 
   .product-preview {
-    order: -1;
+    order: 0;
   }
 
   .admin-actions {
@@ -1986,12 +2070,30 @@ details summary {
     text-align: left;
   }
 
+  .about-main,
   .achievement-wide {
     grid-column: auto;
   }
 
+  .teacher-photo-card {
+    max-width: 520px;
+  }
+
   .board-photo {
     min-height: 320px;
+  }
+
+  .diagnostic-start-card,
+  .timer-card,
+  .pricing-note,
+  .cabinet-status {
+    max-width: 420px;
+  }
+
+  .diagnostic-card-actions,
+  .pricing-note,
+  .timer-card {
+    justify-items: stretch;
   }
 }
 
@@ -2004,46 +2106,187 @@ details summary {
     font-size: 24px;
   }
 
-  .topbar,
-  .topnav {
-    align-items: flex-start;
+  h3 {
+    font-size: 17px;
+  }
+
+  .topbar {
+    position: static;
+    align-items: stretch;
     flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    padding: 10px 12px 12px;
   }
 
   .topnav {
-    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .brand {
+    gap: 8px;
+  }
+
+  .brand-mark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .brand-text {
+    font-size: 16px;
+  }
+
+  .topnav > a,
+  .topnav .nav-dropdown-trigger,
+  .topnav .link-button {
+    display: inline-flex;
+    justify-content: center;
+    width: 100%;
+    min-height: 38px;
+    padding: 7px 8px;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.15;
+  }
+
+  .inline-form {
+    display: block;
+    width: 100%;
   }
 
   .nav-dropdown {
     display: grid;
+    grid-column: 1 / -1;
     gap: 8px;
+  }
+
+  .topnav .nav-dropdown-trigger {
+    display: none;
   }
 
   .nav-dropdown-menu {
     position: static;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
     min-width: 0;
+    border: 0;
+    background: transparent;
+    padding: 0;
     opacity: 1;
     pointer-events: auto;
     transform: none;
     box-shadow: none;
   }
 
+  .nav-dropdown-menu a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    border: 1px solid var(--border);
+    background: #fff;
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.15;
+  }
+
   .section {
     width: min(100vw - 24px, 1180px);
-    padding: 32px 0;
+    padding: 28px 0;
   }
 
   .hero {
     min-height: auto;
+    gap: 22px;
+    padding-top: 24px;
+  }
+
+  .hero-copy::before {
+    width: 52px;
+    height: 5px;
+    margin-bottom: 14px;
+  }
+
+  .hero-text {
+    font-size: 16px;
+  }
+
+  .hero-proof {
+    gap: 8px;
+  }
+
+  .hero-proof span {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
+
+  .product-preview,
+  .feature-card,
+  .about-card,
+  .achievement-card,
+  .content-block,
+  .auth-box,
+  .empty-state,
+  .summary-block,
+  .admin-panel,
+  .stat-tile,
+  .report-card,
+  .checkpoint-card,
+  .topic-card,
+  .diagnostic-card,
+  .diagnostic-admin-card,
+  .review-task-card,
+  .student-review-card,
+  .pricing-card,
+  .pricing-compare,
+  .latest-report,
+  .completed-homework {
+    padding: 16px;
   }
 
   .preview-grid {
     grid-template-columns: 1fr;
   }
 
+  .feature-grid,
+  .about-grid,
+  .achievement-grid,
+  .stats-row,
+  .summary-grid,
+  .topic-grid,
+  .checkpoint-grid,
+  .diagnostic-task-nav {
+    gap: 12px;
+  }
+
+  .lead-filter {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .filter-chip {
+    min-height: 38px;
+  }
+
   .button,
   .button-row {
     width: 100%;
+  }
+
+  .button-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .button {
+    min-width: 0;
+    white-space: normal;
   }
 
   .leads-head,
@@ -2052,9 +2295,25 @@ details summary {
   .diagnostic-task-head,
   .diagnostic-admin-top,
   .review-task-head,
-  .student-review-head {
+  .student-review-head,
+  .report-card-head,
+  .dialog-head {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .lead-actions,
+  .admin-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .lead-actions form,
+  .admin-actions .button,
+  .admin-actions form,
+  .admin-actions button {
+    width: 100%;
   }
 
   .homework-actions {
@@ -2066,5 +2325,114 @@ details summary {
   .homework-actions > * {
     width: 100%;
     max-width: 100%;
+  }
+
+  .access-line {
+    gap: 12px;
+  }
+
+  .badge,
+  .file-pill {
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .diagnostic-start-card,
+  .timer-card,
+  .pricing-note,
+  .cabinet-status,
+  .teacher-photo-card {
+    max-width: none;
+  }
+
+  .diagnostic-side {
+    gap: 14px;
+    padding: 14px;
+  }
+
+  .diagnostic-task-nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .diag-nav-button {
+    min-height: 38px;
+  }
+
+  .diagnostic-task-panel {
+    padding: 16px;
+  }
+
+  .task-prompt {
+    font-size: 16px;
+  }
+
+  .task-skill {
+    padding: 9px 10px;
+  }
+
+  .timer-card strong {
+    font-size: 34px;
+  }
+
+  .review-score-row {
+    gap: 10px;
+  }
+
+  .price-line strong {
+    font-size: 34px;
+  }
+
+  .big-number {
+    font-size: 38px;
+  }
+
+  .teacher-photo,
+  .board-photo {
+    max-height: 520px;
+  }
+
+  .board-photo {
+    min-height: 260px;
+  }
+
+  .philosophy-copy {
+    padding: 20px;
+  }
+
+  .contact-dialog {
+    width: calc(100vw - 24px);
+  }
+}
+
+@media (max-width: 430px) {
+  h1 {
+    font-size: 28px;
+  }
+
+  .topnav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nav-dropdown-menu {
+    grid-template-columns: 1fr;
+  }
+
+  .topnav > a,
+  .topnav .link-button,
+  .nav-dropdown-menu a {
+    font-size: 13px;
+  }
+
+  .section {
+    width: min(100vw - 20px, 1180px);
+    padding: 24px 0;
+  }
+
+  .diagnostic-task-nav {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .preview-grid div {
+    min-height: 0;
   }
 }
