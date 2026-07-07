@@ -254,6 +254,7 @@ class DiagnosticTask(Base, TimestampMixin):
     title: Mapped[str] = mapped_column(String(220))
     skill: Mapped[str] = mapped_column(String(260), default="")
     prompt: Mapped[str] = mapped_column(Text)
+    image_path: Mapped[str] = mapped_column(String(500), default="")
     correct_answer: Mapped[str] = mapped_column(String(260))
     solution: Mapped[str] = mapped_column(Text, default="")
     max_score: Mapped[int] = mapped_column(Integer, default=1)

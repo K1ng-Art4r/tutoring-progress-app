@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 460" role="img" aria-labelledby="title desc">
+  <title id="title">График функции к заданию 8</title>
+  <desc id="desc">Ломаная проходит через точки A(-2;4), B(0;0), C(1;-2), D(4;1).</desc>
+  <rect width="720" height="460" rx="18" fill="#ffffff"/>
+  <g transform="translate(70 38)">
+    <g stroke="#d6e2dd" stroke-width="1">
+      <path d="M0 0H560M0 50H560M0 100H560M0 150H560M0 200H560M0 250H560M0 300H560M0 350H560M0 400H560"/>
+      <path d="M0 0V400M70 0V400M140 0V400M210 0V400M280 0V400M350 0V400M420 0V400M490 0V400M560 0V400"/>
+    </g>
+
+    <g stroke="#1f332b" stroke-width="2.2" stroke-linecap="round">
+      <path d="M0 250H560"/>
+      <path d="M280 400V0"/>
+      <path d="M560 250L550 241M560 250L550 259"/>
+      <path d="M280 0L271 10M280 0L289 10"/>
+    </g>
+
+    <g fill="#293f36" font-family="Arial, sans-serif" font-size="16">
+      <text x="548" y="236">x</text>
+      <text x="292" y="24">y</text>
+      <text x="-6" y="272" text-anchor="middle">-3</text>
+      <text x="70" y="272" text-anchor="middle">-2</text>
+      <text x="140" y="272" text-anchor="middle">-1</text>
+      <text x="265" y="272" text-anchor="middle">0</text>
+      <text x="350" y="272" text-anchor="middle">1</text>
+      <text x="420" y="272" text-anchor="middle">2</text>
+      <text x="490" y="272" text-anchor="middle">3</text>
+      <text x="560" y="272" text-anchor="middle">4</text>
+      <text x="268" y="405" text-anchor="end">-3</text>
+      <text x="268" y="355" text-anchor="end">-2</text>
+      <text x="268" y="305" text-anchor="end">-1</text>
+      <text x="268" y="205" text-anchor="end">1</text>
+      <text x="268" y="155" text-anchor="end">2</text>
+      <text x="268" y="105" text-anchor="end">3</text>
+      <text x="268" y="55" text-anchor="end">4</text>
+      <text x="268" y="8" text-anchor="end">5</text>
+    </g>
+
+    <polyline
+      points="140,50 280,250 350,350 560,200"
+      fill="none"
+      stroke="#006b43"
+      stroke-width="5"
+      stroke-linejoin="round"
+      stroke-linecap="round"
+    />
+    <g fill="#006b43" stroke="#ffffff" stroke-width="3">
+      <circle cx="140" cy="50" r="8"/>
+      <circle cx="280" cy="250" r="8"/>
+      <circle cx="350" cy="350" r="8"/>
+      <circle cx="560" cy="200" r="8"/>
+    </g>
+    <g fill="#006b43" font-family="Arial, sans-serif" font-size="18" font-weight="700">
+      <text x="151" y="39">A</text>
+      <text x="291" y="239">B</text>
+      <text x="361" y="340">C</text>
+      <text x="571" y="190">D</text>
+    </g>
+  </g>
+  <text x="360" y="438" text-anchor="middle" fill="#5d6f67" font-family="Arial, sans-serif" font-size="17">
+    График к заданию 8
+  </text>
+</svg>

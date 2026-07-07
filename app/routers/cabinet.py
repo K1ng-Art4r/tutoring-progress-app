@@ -58,6 +58,18 @@ def _latest_attempt(student_id: int, work_id: int, db: Session) -> DiagnosticAtt
     )
 
 
+def _active_work_for_student(student: Student, work_slug: str, db: Session) -> DiagnosticWork | None:
+    return db.scalar(
+        select(DiagnosticWork)
+        .where(
+            DiagnosticWork.slug == work_slug,
+            DiagnosticWork.subject == student.subject,
+            DiagnosticWork.is_active.is_(True),
+        )
+        .options(selectinload(DiagnosticWork.tasks))
+    )
+
+
 def _finish_expired_attempt(attempt: DiagnosticAttempt) -> bool:
     if attempt.status == "in_progress" and _remaining_seconds(attempt) <= 0:
         finalize_attempt(attempt)
@@ -253,34 +265,24 @@ def diagnostic_work_page(
             status_code=404,
         )
 
-    work = db.scalar(
-        select(DiagnosticWork)
-        .where(
-            DiagnosticWork.slug == work_slug,
-            DiagnosticWork.subject == student.subject,
-            DiagnosticWork.is_active.is_(True),
-        )
-        .options(selectinload(DiagnosticWork.tasks))
-    )
+    work = _active_work_for_student(student, work_slug, db)
     if work is None:
         raise HTTPException(status_code=404)
 
     attempt = _latest_attempt(student.id, work.id, db)
     if attempt is None:
-        now = datetime.utcnow()
-        attempt = DiagnosticAttempt(
-            student_id=student.id,
-            work_id=work.id,
-            started_at=now,
-            expires_at=now + timedelta(minutes=work.duration_minutes),
-            status="in_progress",
+        return templates.TemplateResponse(
+            request,
+            "diagnostic_intro.html",
+            {
+                "request": request,
+                "student": student,
+                "work": work,
+                "tasks": work.tasks,
+                "is_admin": False,
+                "noindex": True,
+            },
         )
-        db.add(attempt)
-        db.commit()
-        attempt = _latest_attempt(student.id, work.id, db)
-
-    if attempt is None:
-        raise HTTPException(status_code=404)
 
     if _finish_expired_attempt(attempt):
         db.commit()
@@ -322,6 +324,45 @@ def diagnostic_work_page(
             "is_admin": False,
             "noindex": True,
         },
+    )
+
+
+@router.post("/{access_token}/diagnostics/{work_slug}/start")
+def start_diagnostic_work(
+    access_token: str,
+    work_slug: str,
+    db: Session = Depends(get_db),
+):
+    student = _student_by_token(access_token, db)
+    if student is None:
+        raise HTTPException(status_code=404)
+
+    work = _active_work_for_student(student, work_slug, db)
+    if work is None:
+        raise HTTPException(status_code=404)
+
+    attempt = _latest_attempt(student.id, work.id, db)
+    if attempt is not None:
+        if _finish_expired_attempt(attempt):
+            db.commit()
+        return RedirectResponse(
+            f"/cabinet/{access_token}/diagnostics/{work.slug}",
+            status_code=303,
+        )
+
+    now = datetime.utcnow()
+    attempt = DiagnosticAttempt(
+        student_id=student.id,
+        work_id=work.id,
+        started_at=now,
+        expires_at=now + timedelta(minutes=work.duration_minutes),
+        status="in_progress",
+    )
+    db.add(attempt)
+    db.commit()
+    return RedirectResponse(
+        f"/cabinet/{access_token}/diagnostics/{work.slug}",
+        status_code=303,
     )
 
 

@@ -74,7 +74,12 @@
         </div>
 
         <p class="task-skill">{{ task.skill }}</p>
-        <p class="task-prompt">{{ task.prompt }}</p>
+        <p class="task-prompt">{{ task.prompt|nl2br|safe }}</p>
+        {% if task.image_path %}
+          <figure class="task-figure">
+            <img src="{{ task.image_path }}" alt="Иллюстрация к заданию {{ task.position }}">
+          </figure>
+        {% endif %}
 
         <div class="review-answer-grid">
           <div>

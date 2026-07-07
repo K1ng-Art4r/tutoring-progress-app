@@ -36,7 +36,7 @@ def _public_base_url() -> str:
 
 @dataclass(frozen=True)
 class Settings:
-    app_name: str = "Кабинет прогресса"
+    app_name: str = "Вектор решений"
     database_url: str = _database_url()
     public_base_url: str = _public_base_url()
     teacher_password: str = os.getenv("TEACHER_PASSWORD", "change-me")

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Инструкция · {{ work.exam_type }}{% endblock %}
+
+{% block content %}
+<section class="section diagnostic-start-hero">
+  <div>
+    <p class="eyebrow">{{ work.exam_type }}</p>
+    <h1>{{ work.title }}</h1>
+    <p>{{ work.description }}</p>
+  </div>
+  <div class="diagnostic-start-card">
+    <span>Формат</span>
+    <strong>{{ tasks|length }} заданий · {{ work.max_score }} баллов</strong>
+    <small>Таймер запустится только после нажатия кнопки «Начать диагностику».</small>
+  </div>
+</section>
+
+<section class="section diagnostic-instructions">
+  <article class="content-block">
+    <h2>Перед началом</h2>
+    <ul class="instruction-list">
+      <li>На выполнение работы отводится {{ work.duration_minutes }} минут.</li>
+      <li>Калькулятор не используется. Можно пользоваться черновиком и обычной линейкой.</li>
+      <li>В заданиях 1-10 достаточно сохранить ответ в поле на сайте.</li>
+      <li>В заданиях 11-12 нужно сохранить ответ и прикрепить скриншот или PDF с ходом решения.</li>
+      <li>Если ответ получился дробным, десятичную дробь можно писать через запятую.</li>
+      <li>Единицы измерения в ответ не пишите, если это не указано отдельно.</li>
+    </ul>
+  </article>
+
+  <article class="content-block highlight-block">
+    <h2>Что будет после</h2>
+    <p>
+      После завершения работа уйдет преподавателю. Он проверит ответы, посмотрит развернутые решения
+      и подготовит вывод: текущий уровень, сильные стороны, зоны роста и рекомендации родителям.
+    </p>
+    <form method="post" action="/cabinet/{{ student.access_token }}/diagnostics/{{ work.slug }}/start">
+      <button class="button primary full-width" type="submit">Начать диагностику</button>
+    </form>
+    <a class="button secondary full-width" href="/cabinet/{{ student.access_token }}">Вернуться в кабинет</a>
+  </article>
+</section>
+{% endblock %}

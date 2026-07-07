@@ -100,6 +100,50 @@ OGE_SCALE_BANDS = [
     },
 ]
 
+EGE_BASE_SCALE_BANDS = [
+    {
+        "min": 0,
+        "max": 6,
+        "level": "Высокий риск",
+        "conclusion": (
+            "База по математике нестабильна: ученик может терять баллы даже на простых заданиях."
+        ),
+        "focus": "Вычисления, проценты, практические задачи, простые уравнения и базовая геометрия.",
+        "target": "Собрать фундамент и снизить риск потерь на типовых заданиях.",
+    },
+    {
+        "min": 7,
+        "max": 10,
+        "level": "Сдать возможно, но нестабильно",
+        "conclusion": (
+            "Часть базы уже есть, но результат зависит от темы и внимательности."
+        ),
+        "focus": "Арифметика, чтение условий, таблицы, графики, проценты, уравнения и геометрия.",
+        "target": "Сделать сдачу устойчивой и начать движение к уверенной оценке 4.",
+    },
+    {
+        "min": 11,
+        "max": 15,
+        "level": "База на 4 формируется",
+        "conclusion": (
+            "Ученик решает значительную часть базовых задач, но нужно убрать слабые зоны "
+            "и ошибки невнимательности."
+        ),
+        "focus": "Практические задачи, функции, геометрия и комбинированные задания.",
+        "target": "Перевести рабочую базу в уверенную 4 и подготовить выход на 5.",
+    },
+    {
+        "min": 16,
+        "max": 20,
+        "level": "Сильная база, потенциал на 5",
+        "conclusion": (
+            "Основные темы рабочие, теперь важно довести скорость, аккуратность и стабильность."
+        ),
+        "focus": "Сложные практические задачи, геометрия, задания в несколько шагов и стратегия экзамена.",
+        "target": "Закрепить потенциал на 5 и снизить количество мелких ошибок.",
+    },
+]
+
 
 def normalize_answer(value: str | None) -> str:
     if not value:
@@ -120,6 +164,8 @@ def normalize_answer(value: str | None) -> str:
     for source, target in replacements.items():
         normalized = normalized.replace(source, target)
     normalized = normalized.replace("рублей", "").replace("руб.", "").replace("р.", "")
+    if re.fullmatch(r"0\d:\d{2}", normalized):
+        normalized = normalized[1:]
     return normalized
 
 
@@ -134,15 +180,20 @@ def _as_decimal(value: str) -> Decimal | None:
 
 def answers_match(student_answer: str | None, correct_answer: str) -> bool:
     student_normalized = normalize_answer(student_answer)
-    correct_normalized = normalize_answer(correct_answer)
     if not student_normalized:
         return False
 
-    student_decimal = _as_decimal(student_normalized)
-    correct_decimal = _as_decimal(correct_normalized)
-    if student_decimal is not None and correct_decimal is not None:
-        return student_decimal == correct_decimal
-    return student_normalized == correct_normalized
+    for correct_variant in correct_answer.split("|"):
+        correct_normalized = normalize_answer(correct_variant)
+        student_decimal = _as_decimal(student_normalized)
+        correct_decimal = _as_decimal(correct_normalized)
+        if student_decimal is not None and correct_decimal is not None:
+            if student_decimal == correct_decimal:
+                return True
+            continue
+        if student_normalized == correct_normalized:
+            return True
+    return False
 
 
 def score_answer(task: DiagnosticTask, answer_text: str | None) -> tuple[bool, int]:
@@ -171,7 +222,12 @@ def finalize_attempt(attempt: DiagnosticAttempt) -> None:
 
 
 def get_scale_band(score: int, exam_type: str | None = None) -> dict[str, str | int]:
-    scale_bands = OGE_SCALE_BANDS if exam_type == "ОГЭ" else SCALE_BANDS
+    if exam_type == "ОГЭ":
+        scale_bands = OGE_SCALE_BANDS
+    elif exam_type == "ЕГЭ база":
+        scale_bands = EGE_BASE_SCALE_BANDS
+    else:
+        scale_bands = SCALE_BANDS
     for band in scale_bands:
         if band["min"] <= score <= band["max"]:
             return band
