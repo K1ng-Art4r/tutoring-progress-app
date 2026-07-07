@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from starlette.responses import Response
+from starlette.responses import FileResponse, Response
 
 from app.config import settings
 from app.database import SessionLocal, init_database
@@ -33,6 +33,11 @@ app.include_router(admin.router)
 @app.get("/healthz", include_in_schema=False)
 def healthz() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> FileResponse:
+    return FileResponse("app/static/favicon.png", media_type="image/png")
 
 
 @app.middleware("http")
