@@ -11,6 +11,7 @@
   </div>
   <div class="admin-actions">
     <a class="button secondary" href="/admin/homework">Все ДЗ</a>
+    <a class="button secondary" href="/admin/diagnostics">Диагностики</a>
     <a class="button primary" href="/admin/students/new">+ Создать кабинет</a>
   </div>
 </section>
@@ -27,6 +28,10 @@
   <div class="stat-tile">
     <span>Новые заявки</span>
     <strong>{{ lead_counts.get("new", 0) }}</strong>
+  </div>
+  <div class="stat-tile">
+    <span>Диагностики на проверку</span>
+    <strong>{{ diagnostic_review_count }}</strong>
   </div>
 </section>
 

@@ -201,9 +201,31 @@ details summary {
 .topnav {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 6px;
   color: var(--muted);
   font-weight: 650;
+}
+
+.topnav > a,
+.topnav .nav-dropdown-trigger,
+.topnav .link-button {
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--green);
+  padding: 8px 10px;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.topnav > a:hover,
+.topnav .nav-dropdown:hover .nav-dropdown-trigger,
+.topnav .nav-dropdown:focus-within .nav-dropdown-trigger,
+.topnav .nav-dropdown-trigger:hover,
+.topnav .link-button:hover {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(23, 114, 69, 0.18);
+  text-decoration: none;
 }
 
 .nav-dropdown {
@@ -217,7 +239,6 @@ details summary {
   font: inherit;
   font-weight: 650;
   cursor: pointer;
-  padding: 0;
 }
 
 .nav-dropdown-menu {
@@ -253,8 +274,8 @@ details summary {
 }
 
 .nav-dropdown-menu a:hover {
-  background: var(--green-soft);
-  color: var(--green-strong);
+  background: var(--green);
+  color: #fff;
   text-decoration: none;
 }
 
@@ -270,7 +291,6 @@ details summary {
   font: inherit;
   font-weight: 650;
   cursor: pointer;
-  padding: 0;
 }
 
 .section {
@@ -566,6 +586,49 @@ details summary {
   color: #405146;
 }
 
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.achievement-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-height: 210px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 20px;
+  box-shadow: 0 10px 26px rgba(24, 74, 46, 0.05);
+}
+
+.achievement-card h3,
+.achievement-card p {
+  margin-bottom: 0;
+}
+
+.achievement-card p {
+  color: #405146;
+}
+
+.achievement-wide {
+  grid-column: span 2;
+  border-color: #c5dfc9;
+  background: var(--mint);
+}
+
+.achievement-kicker {
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-strong);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 .big-number {
   color: var(--green-strong);
   font-size: 46px;
@@ -595,6 +658,35 @@ details summary {
   border-radius: 7px;
   object-fit: cover;
   background: var(--green-soft);
+}
+
+.teaching-philosophy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.48fr);
+  gap: 34px;
+  align-items: center;
+}
+
+.philosophy-copy {
+  border: 1px solid #c8dfce;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #ffffff 0%, #f5fff7 100%);
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.philosophy-copy p:last-child {
+  margin-bottom: 0;
+}
+
+.board-photo-card {
+  align-self: stretch;
+}
+
+.board-photo {
+  height: 100%;
+  min-height: 420px;
+  aspect-ratio: auto;
 }
 
 .contact-section {
@@ -646,7 +738,7 @@ details summary {
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
   padding-top: 4px;
 }
@@ -868,7 +960,8 @@ details summary {
 .badge.active,
 .badge.approved,
 .badge.independent,
-.badge.ready-for-test {
+.badge.ready-for-test,
+.badge.reviewed {
   background: var(--green-soft);
   color: var(--green);
 }
@@ -876,6 +969,7 @@ details summary {
 .badge.paused,
 .badge.new,
 .badge.contacted,
+.badge.submitted,
 .badge.with-help,
 .badge.explained {
   background: var(--amber-soft);
@@ -884,6 +978,7 @@ details summary {
 
 .badge.archived,
 .badge.rejected,
+.badge.in-progress,
 .badge.not-started {
   background: #eef1f4;
   color: var(--muted);
@@ -1301,6 +1396,471 @@ details summary {
   padding: 16px;
 }
 
+.full-width {
+  width: 100%;
+}
+
+.diagnostic-card-grid,
+.diagnostic-admin-grid,
+.review-task-list {
+  display: grid;
+  gap: 16px;
+}
+
+.diagnostic-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.diagnostic-card,
+.diagnostic-admin-card,
+.review-task-card,
+.timer-card,
+.diagnostic-side {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(24, 74, 46, 0.05);
+}
+
+.diagnostic-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.38fr);
+  gap: 18px;
+  align-items: center;
+  padding: 18px;
+}
+
+.diagnostic-card h3,
+.diagnostic-admin-card h3,
+.review-task-card h3,
+.diagnostic-card p,
+.diagnostic-admin-card p,
+.task-prompt {
+  margin-bottom: 0;
+}
+
+.diagnostic-card-actions {
+  display: grid;
+  justify-items: end;
+  gap: 10px;
+  text-align: right;
+}
+
+.diagnostic-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 24px;
+  align-items: end;
+}
+
+.timer-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f5fff7 100%);
+}
+
+.timer-card span,
+.timer-card small {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.timer-card strong {
+  color: var(--green-strong);
+  font-size: 42px;
+  line-height: 1;
+}
+
+.timer-card strong.is-low {
+  color: var(--red);
+}
+
+.diagnostic-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.diagnostic-side {
+  position: sticky;
+  top: 84px;
+  display: grid;
+  gap: 18px;
+  padding: 16px;
+}
+
+.diagnostic-task-nav {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.diag-nav-button {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.diag-nav-button.is-saved {
+  border-color: #9fd8b3;
+  background: var(--green-soft);
+  color: var(--green-strong);
+}
+
+.diag-nav-button.is-active {
+  border-color: var(--green);
+  box-shadow: inset 0 0 0 2px rgba(23, 114, 69, 0.18);
+}
+
+.diagnostic-legend {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.diagnostic-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #d8dde0;
+}
+
+.legend-dot.saved {
+  background: var(--green);
+}
+
+.legend-dot.current {
+  border: 2px solid var(--green);
+  background: #fff;
+}
+
+.diagnostic-task-area {
+  min-width: 0;
+}
+
+.diagnostic-task-panel {
+  display: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 22px;
+}
+
+.diagnostic-task-panel.is-active {
+  display: grid;
+  gap: 16px;
+}
+
+.diagnostic-task-head,
+.diagnostic-admin-top,
+.review-task-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.task-skill {
+  border-left: 4px solid var(--green);
+  border-radius: 6px;
+  background: var(--green-soft);
+  color: var(--green-strong);
+  padding: 10px 12px;
+  font-weight: 800;
+}
+
+.task-prompt {
+  font-size: 18px;
+  color: #293830;
+}
+
+.diagnostic-answer-form {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.diagnostic-complete {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 24px;
+  align-items: center;
+}
+
+.completion-score {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #c8dfce;
+  border-radius: var(--radius);
+  background: var(--mint);
+  padding: 18px;
+}
+
+.completion-score span {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.completion-score strong {
+  color: var(--green-strong);
+  font-size: 24px;
+}
+
+.diagnostic-admin-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.diagnostic-admin-grid.compact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.diagnostic-admin-card {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+}
+
+.diagnostic-admin-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.diagnostic-review-form {
+  display: grid;
+  gap: 16px;
+}
+
+.review-task-card {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+}
+
+.review-answer-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.review-answer-grid > div {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fbfffc;
+  padding: 12px;
+}
+
+.review-answer-grid strong {
+  overflow-wrap: anywhere;
+}
+
+.criteria-panel {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fbfffc;
+  padding: 10px 12px;
+}
+
+.criteria-panel p {
+  margin: 8px 0 0;
+}
+
+.review-score-row {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.student-review-list {
+  display: grid;
+  gap: 16px;
+}
+
+.student-review-card {
+  display: grid;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 10px 26px rgba(24, 74, 46, 0.05);
+}
+
+.student-review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.solution-explanation {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #c8dfce;
+  border-radius: 7px;
+  background: var(--mint);
+  padding: 14px;
+}
+
+.solution-explanation p {
+  margin-bottom: 0;
+}
+
+.pricing-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 30px;
+  align-items: end;
+}
+
+.pricing-note {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #c8dfce;
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #ffffff 0%, #f5fff7 100%);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.pricing-note span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.pricing-note strong {
+  color: var(--green-strong);
+  font-size: 20px;
+}
+
+.pricing-note p {
+  margin-bottom: 0;
+  color: #405146;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding-top: 12px;
+}
+
+.pricing-card {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 24px;
+  box-shadow: 0 16px 36px rgba(24, 74, 46, 0.08);
+}
+
+.featured-pricing {
+  border-color: #9fd8b3;
+  background: linear-gradient(180deg, #ffffff 0%, #f4fff7 100%);
+  box-shadow: var(--shadow);
+}
+
+.pricing-card-head {
+  display: grid;
+  gap: 8px;
+}
+
+.pricing-card-head h2,
+.pricing-card-head p {
+  margin-bottom: 0;
+}
+
+.pricing-label {
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-strong);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.price-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  align-items: baseline;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 0;
+}
+
+.price-line strong {
+  color: var(--green-strong);
+  font-size: 42px;
+  line-height: 1;
+}
+
+.price-line span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.pricing-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  color: #405146;
+}
+
+.pricing-list li::marker {
+  color: var(--green);
+}
+
+.pricing-compare {
+  border: 1px solid #c8dfce;
+  border-radius: var(--radius);
+  background: var(--mint);
+  padding: 24px;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.compare-row > div {
+  border-left: 4px solid var(--green);
+  border-radius: 6px;
+  background: #fff;
+  padding: 16px;
+}
+
+.compare-row p {
+  margin-bottom: 0;
+  color: #405146;
+}
+
 .footer {
   width: min(1180px, calc(100vw - 32px));
   margin: 0 auto;
@@ -1316,10 +1876,25 @@ details summary {
 
   .hero,
   .teacher-hero,
+  .teaching-philosophy,
   .feature-grid,
   .about-grid,
+  .achievement-grid,
+  .achievement-wide,
   .lead-card-grid,
   .homework-board,
+  .diagnostic-card-grid,
+  .diagnostic-card,
+  .diagnostic-hero,
+  .diagnostic-shell,
+  .diagnostic-complete,
+  .diagnostic-admin-grid,
+  .diagnostic-admin-grid.compact-grid,
+  .review-answer-grid,
+  .review-score-row,
+  .pricing-hero,
+  .pricing-grid,
+  .compare-row,
   .two-column,
   .admin-header,
   .student-admin-head,
@@ -1351,6 +1926,23 @@ details summary {
   .mini-form,
   .form-grid {
     grid-template-columns: 1fr;
+  }
+
+  .diagnostic-side {
+    position: static;
+  }
+
+  .diagnostic-card-actions {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .achievement-wide {
+    grid-column: auto;
+  }
+
+  .board-photo {
+    min-height: 320px;
   }
 }
 
@@ -1407,7 +1999,11 @@ details summary {
 
   .leads-head,
   .lead-card-top,
-  .homework-card-head {
+  .homework-card-head,
+  .diagnostic-task-head,
+  .diagnostic-admin-top,
+  .review-task-head,
+  .student-review-head {
     align-items: stretch;
     flex-direction: column;
   }

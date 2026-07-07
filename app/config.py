@@ -12,14 +12,33 @@ def _bool_env(name: str, default: bool) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-@dataclass(frozen=True)
-class Settings:
-    app_name: str = "Кабинет прогресса"
-    database_url: str = os.getenv(
+def _database_url() -> str:
+    value = os.getenv(
         "DATABASE_URL",
         "postgresql+psycopg://tutoring:tutoring@localhost:5433/tutoring_progress",
     )
-    public_base_url: str = os.getenv("PUBLIC_BASE_URL", "http://localhost:8000")
+    if value.startswith("postgresql://"):
+        return value.replace("postgresql://", "postgresql+psycopg://", 1)
+    if value.startswith("postgres://"):
+        return value.replace("postgres://", "postgresql+psycopg://", 1)
+    return value
+
+
+def _public_base_url() -> str:
+    value = os.getenv("PUBLIC_BASE_URL")
+    if value:
+        return value.rstrip("/")
+    railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+    if railway_domain:
+        return f"https://{railway_domain.strip('/')}"
+    return "http://localhost:8000"
+
+
+@dataclass(frozen=True)
+class Settings:
+    app_name: str = "Кабинет прогресса"
+    database_url: str = _database_url()
+    public_base_url: str = _public_base_url()
     teacher_password: str = os.getenv("TEACHER_PASSWORD", "change-me")
     secret_key: str = os.getenv("SECRET_KEY", "dev-secret-change-me")
     seed_demo_data: bool = _bool_env("SEED_DEMO_DATA", True)

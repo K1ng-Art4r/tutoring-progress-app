@@ -42,6 +42,19 @@ def about_teacher(request: Request):
     )
 
 
+@router.get("/pricing")
+def pricing(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "pricing.html",
+        {
+            "request": request,
+            "is_admin": False,
+            "noindex": False,
+        },
+    )
+
+
 @router.post("/request")
 def create_request(
     parent_name: str = Form(...),

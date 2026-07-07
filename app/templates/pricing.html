@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Цены · Progress Tutor{% endblock %}
+
+{% block content %}
+<section class="section pricing-hero">
+  <div>
+    <p class="eyebrow">Стоимость</p>
+    <h1>Два понятных формата занятий по математике</h1>
+    <p class="hero-text">
+      Можно заниматься гибко по часам или сразу взять 4-недельный блок с диагностикой,
+      планом и контрольной диагностикой в конце периода.
+    </p>
+  </div>
+  <div class="pricing-note">
+    <span>Формат</span>
+    <strong>ОГЭ · ЕГЭ база · ЕГЭ профиль</strong>
+    <p>После заявки я уточняю цель, текущий уровень и предлагаю подходящий формат.</p>
+  </div>
+</section>
+
+<section class="section pricing-grid">
+  <article class="pricing-card">
+    <div class="pricing-card-head">
+      <span class="pricing-label">Гибкий старт</span>
+      <h2>Почасовая оплата</h2>
+      <p>Подходит, если нужно попробовать формат, разобрать отдельную тему или заниматься без фиксированного блока.</p>
+    </div>
+    <div class="price-line">
+      <strong>2 500 ₽</strong>
+      <span>за 60 минут</span>
+    </div>
+    <ul class="pricing-list">
+      <li>Индивидуальное занятие 1-на-1.</li>
+      <li>Фокус на конкретной теме или текущем домашнем задании.</li>
+      <li>Короткий отчет в личном кабинете после занятия.</li>
+      <li>Домашнее задание и материалы в кабинете.</li>
+    </ul>
+    <a class="button secondary" href="/#contact">Оставить заявку</a>
+  </article>
+
+  <article class="pricing-card featured-pricing">
+    <div class="pricing-card-head">
+      <span class="pricing-label">Рекомендуемый формат</span>
+      <h2>Блок на 4 недели</h2>
+      <p>Подходит, если нужна не разовая помощь, а измеримый результат и понятный план подготовки.</p>
+    </div>
+    <div class="price-line">
+      <strong>20 000 ₽</strong>
+      <span>за блок</span>
+    </div>
+    <ul class="pricing-list">
+      <li>8 индивидуальных занятий за 4 недели.</li>
+      <li>Стартовая диагностика и фиксация пробелов.</li>
+      <li>План подготовки на весь период.</li>
+      <li>Домашние задания, материалы и отчеты в личном кабинете.</li>
+      <li>Дополнительная диагностика в конце периода, чтобы увидеть реальный результат.</li>
+    </ul>
+    <a class="button primary" href="/#contact">Выбрать блок</a>
+  </article>
+</section>
+
+<section class="section pricing-compare">
+  <div class="section-heading compact">
+    <p class="eyebrow">Как выбрать</p>
+    <h2>Если цель экзамен, лучше начинать с блока</h2>
+  </div>
+  <div class="compare-row">
+    <div>
+      <strong>Почасово</strong>
+      <p>Хорошо для знакомства, точечной темы или нестабильного расписания.</p>
+    </div>
+    <div>
+      <strong>4-недельный блок</strong>
+      <p>Лучше для ОГЭ и ЕГЭ: есть диагностика, план, регулярность и итоговая проверка результата.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

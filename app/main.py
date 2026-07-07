@@ -8,6 +8,7 @@ from starlette.responses import Response
 
 from app.config import settings
 from app.database import SessionLocal, init_database
+from app.diagnostics_data import seed_diagnostic_works
 from app.routers import admin, cabinet, public
 from app.seed import seed_demo_data
 
@@ -15,8 +16,9 @@ from app.seed import seed_demo_data
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_database()
-    if settings.seed_demo_data:
-        with SessionLocal() as db:
+    with SessionLocal() as db:
+        seed_diagnostic_works(db)
+        if settings.seed_demo_data:
             seed_demo_data(db)
     yield
 
@@ -26,6 +28,11 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(public.router)
 app.include_router(cabinet.router)
 app.include_router(admin.router)
+
+
+@app.get("/healthz", include_in_schema=False)
+def healthz() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.middleware("http")

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Диагностики · Админка{% endblock %}
+
+{% block content %}
+<section class="section admin-header">
+  <div>
+    <p class="eyebrow">Проверка работ</p>
+    <h1>Диагностики</h1>
+    <p>Здесь собираются завершенные диагностические работы учеников и результаты ручной проверки.</p>
+  </div>
+  <div class="admin-actions">
+    <a class="button secondary" href="/admin">К ученикам</a>
+    <a class="button secondary" href="/admin/homework">Все ДЗ</a>
+  </div>
+</section>
+
+<section class="section">
+  <nav class="lead-filter" aria-label="Фильтр диагностик">
+    <a class="filter-chip {% if selected_view == 'needs_review' %}is-selected{% endif %}" href="/admin/diagnostics?view=needs_review">
+      <span>На проверку</span><strong>{{ diagnostic_counts.needs_review }}</strong>
+    </a>
+    <a class="filter-chip {% if selected_view == 'in_progress' %}is-selected{% endif %}" href="/admin/diagnostics?view=in_progress">
+      <span>В процессе</span><strong>{{ diagnostic_counts.in_progress }}</strong>
+    </a>
+    <a class="filter-chip {% if selected_view == 'reviewed' %}is-selected{% endif %}" href="/admin/diagnostics?view=reviewed">
+      <span>Проверено</span><strong>{{ diagnostic_counts.reviewed }}</strong>
+    </a>
+    <a class="filter-chip {% if selected_view == 'all' %}is-selected{% endif %}" href="/admin/diagnostics?view=all">
+      <span>Все</span><strong>{{ diagnostic_counts.all }}</strong>
+    </a>
+  </nav>
+</section>
+
+<section class="section">
+  <div class="diagnostic-admin-grid">
+    {% for attempt in attempts %}
+      <article class="diagnostic-admin-card">
+        <div class="diagnostic-admin-top">
+          <div>
+            <span class="muted">{{ attempt.work.exam_type }} · {{ attempt.submitted_at|date if attempt.submitted_at else attempt.created_at|date }}</span>
+            <h3>{{ attempt.student.name }}</h3>
+          </div>
+          <span class="badge {{ attempt.status|status_class }}">{{ attempt.status|status_label }}</span>
+        </div>
+        <p>{{ attempt.work.title }}</p>
+        <div class="diagnostic-admin-meta">
+          <span>Автосчет: <b>{{ attempt.auto_score }}/{{ attempt.work.max_score }}</b></span>
+          {% if attempt.manual_score is not none %}
+            <span>После проверки: <b>{{ attempt.manual_score }}/{{ attempt.work.max_score }}</b></span>
+          {% endif %}
+          <span>Родитель: {{ attempt.student.parent_name or "—" }}</span>
+        </div>
+        <a class="button primary" href="/admin/diagnostics/{{ attempt.id }}">
+          {% if attempt.status == "submitted" %}Проверить работу{% else %}Открыть работу{% endif %}
+        </a>
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <h3>Работ в этом статусе нет</h3>
+        <p>Когда ученик завершит диагностику, она появится здесь.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

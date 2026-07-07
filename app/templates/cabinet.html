@@ -39,6 +39,45 @@
   </div>
 </section>
 
+<section class="section">
+  <div class="section-heading compact">
+    <h2>Диагностические работы</h2>
+    <p>Короткий срез помогает понять текущий уровень и получить точный план занятий.</p>
+  </div>
+  <div class="diagnostic-card-grid">
+    {% for work in diagnostic_works %}
+      {% set attempt = latest_diagnostic_attempts.get(work.id) %}
+      <article class="diagnostic-card">
+        <div>
+          <span class="muted">{{ work.exam_type }} · {{ work.duration_minutes }} минут</span>
+          <h3>{{ work.title }}</h3>
+          <p>{{ work.description }}</p>
+        </div>
+        <div class="diagnostic-card-actions">
+          {% if attempt %}
+            <span class="badge {{ attempt.status|status_class }}">{{ attempt.status|status_label }}</span>
+            {% if attempt.status == "reviewed" %}
+              <strong>{{ attempt.manual_score }}/{{ work.max_score }} баллов</strong>
+            {% elif attempt.status == "submitted" %}
+              <span class="muted">Ожидает проверки преподавателем</span>
+            {% else %}
+              <span class="muted">Можно продолжить до окончания таймера</span>
+            {% endif %}
+          {% endif %}
+          <a class="button primary" href="/cabinet/{{ student.access_token }}/diagnostics/{{ work.slug }}">
+            {% if attempt and attempt.status != "in_progress" %}Открыть{% elif attempt %}Продолжить{% else %}Начать диагностику{% endif %}
+          </a>
+        </div>
+      </article>
+    {% else %}
+      <div class="empty-state">
+        <h3>Для этого направления диагностика еще не добавлена</h3>
+        <p>Преподаватель сможет добавить отдельную работу для этого экзамена в следующем обновлении.</p>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
 <section class="section cabinet-grid">
   <article class="content-block">
     <h2>Цель и план на 2-4 недели</h2>

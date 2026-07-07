@@ -6,7 +6,12 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 
 from app.config import settings
-from app.models import LEAD_STATUS_LABELS, STUDENT_STATUS_LABELS, TOPIC_STATUS_LABELS
+from app.models import (
+    DIAGNOSTIC_ATTEMPT_STATUS_LABELS,
+    LEAD_STATUS_LABELS,
+    STUDENT_STATUS_LABELS,
+    TOPIC_STATUS_LABELS,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -29,6 +34,7 @@ def status_label(value: str) -> str:
         TOPIC_STATUS_LABELS.get(value)
         or STUDENT_STATUS_LABELS.get(value)
         or LEAD_STATUS_LABELS.get(value)
+        or DIAGNOSTIC_ATTEMPT_STATUS_LABELS.get(value)
         or value
     )
 

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Диагностика завершена · {{ student.name }}{% endblock %}
+
+{% block content %}
+<section class="section diagnostic-complete">
+  <div>
+    <p class="eyebrow">{{ work.exam_type }}</p>
+    <h1>Диагностика завершена</h1>
+    {% if attempt.status == "reviewed" %}
+      <p>Преподаватель проверил работу и подготовил вывод по результатам.</p>
+    {% else %}
+      <p>Все ок, ты молодец. Преподаватель проверит результаты и даст рекомендации сегодня же.</p>
+    {% endif %}
+  </div>
+  <div class="completion-score">
+    <span>Статус</span>
+    <strong>{{ attempt.status|status_label }}</strong>
+    {% if attempt.status == "reviewed" %}
+      <span>Балл</span>
+      <strong>{{ attempt.manual_score }}/{{ work.max_score }}</strong>
+    {% endif %}
+  </div>
+</section>
+
+{% if attempt.status == "reviewed" %}
+  <section class="section cabinet-grid">
+    <article class="content-block">
+      <h2>Вывод</h2>
+      <p>{{ attempt.conclusion }}</p>
+    </article>
+    <article class="content-block">
+      <h2>Сообщение для родителя</h2>
+      <p>{{ attempt.parent_message|nl2br|safe }}</p>
+    </article>
+  </section>
+
+  <section class="section">
+    <div class="section-heading compact">
+      <h2>Разбор диагностики</h2>
+      <p>Здесь видны задания, ваши ответы, правильные ответы и краткие решения.</p>
+    </div>
+
+    <div class="student-review-list">
+      {% for task in tasks %}
+        {% set answer = answers_by_task.get(task.id) %}
+        <article class="student-review-card">
+          <div class="student-review-head">
+            <div>
+              <p class="eyebrow">Задание {{ task.position }} · максимум {{ task.max_score }} б.</p>
+              <h3>{{ task.title }}</h3>
+            </div>
+            <span class="badge {% if answer and answer.teacher_score == task.max_score %}ready-for-test{% elif answer and answer.teacher_score and answer.teacher_score > 0 %}with-help{% else %}not-started{% endif %}">
+              {{ answer.teacher_score if answer and answer.teacher_score is not none else 0 }}/{{ task.max_score }} б.
+            </span>
+          </div>
+          <p class="task-skill">{{ task.skill }}</p>
+          <p class="task-prompt">{{ task.prompt }}</p>
+          <div class="review-answer-grid">
+            <div>
+              <span class="muted">Ваш ответ</span>
+              <strong>{{ answer.answer_text if answer and answer.answer_text else "—" }}</strong>
+            </div>
+            <div>
+              <span class="muted">Правильный ответ</span>
+              <strong>{{ task.correct_answer }}</strong>
+            </div>
+            <div>
+              <span class="muted">Проверка</span>
+              <strong>
+                {% if answer and answer.teacher_comment %}
+                  {{ answer.teacher_comment }}
+                {% elif answer and answer.is_correct %}
+                  Ответ совпал
+                {% else %}
+                  Есть ошибка или ответ не был сохранен
+                {% endif %}
+              </strong>
+            </div>
+          </div>
+          <div class="solution-explanation">
+            <span class="muted">Решение</span>
+            <p>{{ task.solution }}</p>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+{% else %}
+  <section class="section">
+    <div class="notice success">Работа отправлена преподавателю. Пока проверка не завершена, ответы изменить уже нельзя.</div>
+  </section>
+{% endif %}
+
+<section class="section">
+  <a class="button secondary" href="/cabinet/{{ student.access_token }}">Вернуться в кабинет</a>
+</section>
+{% endblock %}

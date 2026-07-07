@@ -106,8 +106,8 @@ def seed_demo_data(db: Session) -> None:
             Lead(
                 parent_name="Елена",
                 student_class="8 класс",
-                subject="Алгебра",
-                goal="Подтянуть оценки и убрать страх перед контрольными.",
+                subject="Математика, ОГЭ",
+                goal="Подготовка к ОГЭ по математике. Детали: подтянуть оценки и убрать страх перед контрольными.",
                 contact="@lead_demo",
                 status="new",
             ),

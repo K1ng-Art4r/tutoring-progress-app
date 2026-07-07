@@ -54,6 +54,35 @@
   </article>
 </section>
 
+<section class="section">
+  <div class="section-heading compact">
+    <h2>Диагностики ученика</h2>
+  </div>
+  <div class="diagnostic-admin-grid compact-grid">
+    {% for attempt in student.diagnostic_attempts %}
+      <article class="diagnostic-admin-card">
+        <div class="diagnostic-admin-top">
+          <div>
+            <span class="muted">{{ attempt.created_at|date }}</span>
+            <h3>{{ attempt.work.exam_type }}</h3>
+          </div>
+          <span class="badge {{ attempt.status|status_class }}">{{ attempt.status|status_label }}</span>
+        </div>
+        <p>{{ attempt.work.title }}</p>
+        <div class="diagnostic-admin-meta">
+          <span>Авто: <b>{{ attempt.auto_score }}/{{ attempt.work.max_score }}</b></span>
+          {% if attempt.manual_score is not none %}
+            <span>Проверка: <b>{{ attempt.manual_score }}/{{ attempt.work.max_score }}</b></span>
+          {% endif %}
+        </div>
+        <a class="button small secondary" href="/admin/diagnostics/{{ attempt.id }}">Открыть</a>
+      </article>
+    {% else %}
+      <p class="muted">Ученик еще не проходил диагностику.</p>
+    {% endfor %}
+  </div>
+</section>
+
 <section class="section admin-columns topic-homework-grid">
   <div class="admin-panel">
     <div class="section-heading compact">

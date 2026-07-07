@@ -13,6 +13,7 @@ def run_lightweight_migrations(engine: Engine) -> None:
         "ALTER TABLE homework ADD COLUMN IF NOT EXISTS solution_filename VARCHAR(255)",
         "ALTER TABLE homework ADD COLUMN IF NOT EXISTS solution_storage_path VARCHAR(500)",
         "ALTER TABLE homework ADD COLUMN IF NOT EXISTS solution_content_type VARCHAR(120)",
+        "ALTER TABLE diagnostic_tasks ADD COLUMN IF NOT EXISTS solution TEXT DEFAULT ''",
         "ALTER TABLE students ADD COLUMN IF NOT EXISTS access_code VARCHAR(10)",
         "ALTER TABLE students DROP COLUMN IF EXISTS view_count",
         "ALTER TABLE students DROP COLUMN IF EXISTS last_viewed_at",

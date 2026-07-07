@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Диагностика · {{ student.name }}{% endblock %}
+
+{% block content %}
+<section class="section diagnostic-hero">
+  <div>
+    <p class="eyebrow">{{ work.exam_type }}</p>
+    <h1>{{ work.title }}</h1>
+    <p>{{ work.description }}</p>
+  </div>
+  <div class="timer-card">
+    <span>Осталось времени</span>
+    <strong id="diagnostic-timer" data-remaining="{{ remaining_seconds }}">40:00</strong>
+    <small>Ответы сохраняются только по кнопке «Сохранить ответ».</small>
+  </div>
+</section>
+
+{% if saved_task %}
+  <section class="section">
+    <div class="notice success">Ответ на задание №{{ saved_task }} сохранен.</div>
+  </section>
+{% endif %}
+{% if error == "diagnostic_solution_file_type" %}
+  <section class="section">
+    <div class="notice danger">Файл решения не прикреплен: загрузите PNG, JPG, WEBP или PDF.</div>
+  </section>
+{% endif %}
+
+<section class="section diagnostic-shell">
+  <aside class="diagnostic-side">
+    <div>
+      <span class="muted">Навигация</span>
+      <div class="diagnostic-task-nav">
+        {% for task in tasks %}
+          {% set answer = answers_by_task.get(task.id) %}
+          <button
+            class="diag-nav-button {% if answer and answer.answer_text %}is-saved{% endif %}"
+            type="button"
+            data-task-target="task-{{ task.id }}"
+            data-task-position="{{ task.position }}"
+          >
+            {{ task.position }}
+          </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="diagnostic-legend">
+      <span><i class="legend-dot saved"></i>Ответ сохранен</span>
+      <span><i class="legend-dot current"></i>Открыто сейчас</span>
+    </div>
+
+    <form
+      id="finish-form"
+      method="post"
+      action="/cabinet/{{ student.access_token }}/diagnostics/attempts/{{ attempt.id }}/finish"
+    >
+      <button class="button primary full-width" type="submit">Завершить диагностику</button>
+    </form>
+  </aside>
+
+  <div class="diagnostic-task-area">
+    {% for task in tasks %}
+      {% set answer = answers_by_task.get(task.id) %}
+      <article class="diagnostic-task-panel" id="task-{{ task.id }}" data-task-panel data-task-position="{{ task.position }}">
+        <div class="diagnostic-task-head">
+          <div>
+            <p class="eyebrow">Задание {{ task.position }} · максимум {{ task.max_score }} б.</p>
+            <h2>{{ task.title }}</h2>
+          </div>
+          {% if task.requires_solution %}
+            <span class="badge with-help">Нужно решение</span>
+          {% else %}
+            <span class="badge ready-for-test">Краткий ответ</span>
+          {% endif %}
+        </div>
+
+        <div class="task-skill">{{ task.skill }}</div>
+        <p class="task-prompt">{{ task.prompt }}</p>
+
+        <form
+          method="post"
+          action="/cabinet/{{ student.access_token }}/diagnostics/attempts/{{ attempt.id }}/answers/{{ task.id }}"
+          class="diagnostic-answer-form"
+          enctype="multipart/form-data"
+        >
+          <label>
+            Ответ
+            <input
+              name="answer_text"
+              value="{{ answer.answer_text if answer else '' }}"
+              placeholder="Например: 5 или 0,48"
+              autocomplete="off"
+            >
+          </label>
+
+          {% if task.requires_solution %}
+            <label>
+              Скриншот или PDF с решением
+              <input name="solution_file" type="file" accept="image/png,image/jpeg,image/webp,application/pdf,.png,.jpg,.jpeg,.webp,.pdf">
+            </label>
+            {% if answer and answer.solution_filename %}
+              <span class="file-pill solution-pill">Прикреплено: {{ answer.solution_filename }}</span>
+            {% endif %}
+          {% endif %}
+
+          <button class="button secondary" type="submit">Сохранить ответ</button>
+        </form>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<script>
+  const timerNode = document.getElementById("diagnostic-timer");
+  const finishForm = document.getElementById("finish-form");
+  let remaining = Number(timerNode.dataset.remaining || 0);
+  let submittedByTimer = false;
+
+  function renderTimer() {
+    const minutes = Math.floor(Math.max(remaining, 0) / 60);
+    const seconds = Math.max(remaining, 0) % 60;
+    timerNode.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    timerNode.classList.toggle("is-low", remaining <= 300);
+  }
+
+  renderTimer();
+  const tick = window.setInterval(() => {
+    remaining -= 1;
+    renderTimer();
+    if (remaining <= 0 && !submittedByTimer) {
+      submittedByTimer = true;
+      window.clearInterval(tick);
+      finishForm.submit();
+    }
+  }, 1000);
+
+  const panels = document.querySelectorAll("[data-task-panel]");
+  const buttons = document.querySelectorAll("[data-task-target]");
+
+  function openTask(position) {
+    panels.forEach((panel) => {
+      panel.classList.toggle("is-active", panel.dataset.taskPosition === String(position));
+    });
+    buttons.forEach((button) => {
+      button.classList.toggle("is-active", button.dataset.taskPosition === String(position));
+    });
+  }
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => openTask(button.dataset.taskPosition));
+  });
+
+  openTask("{{ active_task or saved_task or 1 }}");
+</script>
+{% endblock %}

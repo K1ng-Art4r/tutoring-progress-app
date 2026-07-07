@@ -41,6 +41,13 @@ LEAD_STATUS_LABELS = {
     "rejected": "Отклонено",
 }
 
+DIAGNOSTIC_ATTEMPT_STATUSES = ["in_progress", "submitted", "reviewed"]
+DIAGNOSTIC_ATTEMPT_STATUS_LABELS = {
+    "in_progress": "В процессе",
+    "submitted": "Нужна проверка",
+    "reviewed": "Проверено",
+}
+
 
 def make_access_token() -> str:
     return secrets.token_urlsafe(32)
@@ -127,6 +134,11 @@ class Student(Base, TimestampMixin):
         cascade="all, delete-orphan",
         order_by="Checkpoint.checkpoint_date.desc()",
     )
+    diagnostic_attempts: Mapped[list["DiagnosticAttempt"]] = relationship(
+        back_populates="student",
+        cascade="all, delete-orphan",
+        order_by="DiagnosticAttempt.created_at.desc()",
+    )
 
 
 class TopicProgress(Base, TimestampMixin):
@@ -210,3 +222,86 @@ class Checkpoint(Base, TimestampMixin):
     next_month_plan: Mapped[str] = mapped_column(Text)
 
     student: Mapped[Student] = relationship(back_populates="checkpoints")
+
+
+class DiagnosticWork(Base, TimestampMixin):
+    __tablename__ = "diagnostic_works"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slug: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    title: Mapped[str] = mapped_column(String(260))
+    subject: Mapped[str] = mapped_column(String(120), index=True)
+    exam_type: Mapped[str] = mapped_column(String(80))
+    description: Mapped[str] = mapped_column(Text, default="")
+    duration_minutes: Mapped[int] = mapped_column(Integer, default=40)
+    max_score: Mapped[int] = mapped_column(Integer, default=20)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    tasks: Mapped[list["DiagnosticTask"]] = relationship(
+        back_populates="work",
+        cascade="all, delete-orphan",
+        order_by="DiagnosticTask.position.asc()",
+    )
+    attempts: Mapped[list["DiagnosticAttempt"]] = relationship(back_populates="work")
+
+
+class DiagnosticTask(Base, TimestampMixin):
+    __tablename__ = "diagnostic_tasks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    work_id: Mapped[int] = mapped_column(ForeignKey("diagnostic_works.id", ondelete="CASCADE"))
+    position: Mapped[int] = mapped_column(Integer)
+    title: Mapped[str] = mapped_column(String(220))
+    skill: Mapped[str] = mapped_column(String(260), default="")
+    prompt: Mapped[str] = mapped_column(Text)
+    correct_answer: Mapped[str] = mapped_column(String(260))
+    solution: Mapped[str] = mapped_column(Text, default="")
+    max_score: Mapped[int] = mapped_column(Integer, default=1)
+    requires_solution: Mapped[bool] = mapped_column(Boolean, default=False)
+    criteria: Mapped[str] = mapped_column(Text, default="")
+
+    work: Mapped[DiagnosticWork] = relationship(back_populates="tasks")
+    answers: Mapped[list["DiagnosticAnswer"]] = relationship(back_populates="task")
+
+
+class DiagnosticAttempt(Base, TimestampMixin):
+    __tablename__ = "diagnostic_attempts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    student_id: Mapped[int] = mapped_column(ForeignKey("students.id", ondelete="CASCADE"))
+    work_id: Mapped[int] = mapped_column(ForeignKey("diagnostic_works.id", ondelete="CASCADE"))
+    status: Mapped[str] = mapped_column(String(40), default="in_progress")
+    started_at: Mapped[datetime] = mapped_column(DateTime)
+    expires_at: Mapped[datetime] = mapped_column(DateTime)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    auto_score: Mapped[int] = mapped_column(Integer, default=0)
+    manual_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    conclusion: Mapped[str] = mapped_column(Text, default="")
+    parent_message: Mapped[str] = mapped_column(Text, default="")
+
+    student: Mapped[Student] = relationship(back_populates="diagnostic_attempts")
+    work: Mapped[DiagnosticWork] = relationship(back_populates="attempts")
+    answers: Mapped[list["DiagnosticAnswer"]] = relationship(
+        back_populates="attempt",
+        cascade="all, delete-orphan",
+    )
+
+
+class DiagnosticAnswer(Base, TimestampMixin):
+    __tablename__ = "diagnostic_answers"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    attempt_id: Mapped[int] = mapped_column(ForeignKey("diagnostic_attempts.id", ondelete="CASCADE"))
+    task_id: Mapped[int] = mapped_column(ForeignKey("diagnostic_tasks.id", ondelete="CASCADE"))
+    answer_text: Mapped[str] = mapped_column(Text, default="")
+    is_correct: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    auto_score: Mapped[int] = mapped_column(Integer, default=0)
+    teacher_score: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    teacher_comment: Mapped[str] = mapped_column(Text, default="")
+    solution_filename: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    solution_storage_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    solution_content_type: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
+    attempt: Mapped[DiagnosticAttempt] = relationship(back_populates="answers")
+    task: Mapped[DiagnosticTask] = relationship(back_populates="answers")

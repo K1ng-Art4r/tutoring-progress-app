@@ -12,10 +12,15 @@ from sqlalchemy.orm import Session, selectinload
 from app.auth import admin_redirect, attach_login_cookie, clear_login_cookie, is_admin
 from app.config import settings
 from app.database import get_db
+from app.diagnostic_logic import answer_score, build_parent_message, get_scale_band
 from app.file_uploads import save_pdf_upload
 from app.models import (
     STUDENT_STATUSES,
     Checkpoint,
+    DiagnosticAnswer,
+    DiagnosticAttempt,
+    DiagnosticTask,
+    DiagnosticWork,
     Homework,
     LEAD_STATUSES,
     LessonReport,
@@ -73,6 +78,18 @@ def _make_unique_access_code(db: Session) -> str:
             return code
 
 
+def _load_diagnostic_attempt(attempt_id: int, db: Session) -> DiagnosticAttempt | None:
+    return db.scalar(
+        select(DiagnosticAttempt)
+        .where(DiagnosticAttempt.id == attempt_id)
+        .options(
+            selectinload(DiagnosticAttempt.student),
+            selectinload(DiagnosticAttempt.work).selectinload(DiagnosticWork.tasks),
+            selectinload(DiagnosticAttempt.answers).selectinload(DiagnosticAnswer.task),
+        )
+    )
+
+
 @router.get("/login")
 def login_page(request: Request, error: int | None = None):
     if is_admin(request):
@@ -127,6 +144,18 @@ def dashboard(
         status: sum(1 for lead in all_leads if lead.status == status)
         for status in LEAD_STATUSES
     }
+    diagnostic_review_count = len(
+        list(
+            db.scalars(
+                select(DiagnosticAttempt)
+                .join(Student)
+                .where(
+                    DiagnosticAttempt.status == "submitted",
+                    Student.status != "archived",
+                )
+            )
+        )
+    )
     latest_reports: dict[int, LessonReport | None] = {}
     stale_student_ids: set[int] = set()
 
@@ -156,6 +185,7 @@ def dashboard(
             "latest_reports": latest_reports,
             "stale_student_ids": stale_student_ids,
             "active_count": sum(1 for student in students if student.status == "active"),
+            "diagnostic_review_count": diagnostic_review_count,
             "is_admin": True,
             "noindex": True,
         },
@@ -213,6 +243,172 @@ def homework_overview(
             "noindex": True,
         },
     )
+
+
+@router.get("/diagnostics")
+def diagnostics_overview(
+    request: Request,
+    view: str = Query("needs_review"),
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+
+    all_attempts = list(
+        db.scalars(
+            select(DiagnosticAttempt)
+            .join(Student)
+            .where(Student.status != "archived")
+            .options(
+                selectinload(DiagnosticAttempt.student),
+                selectinload(DiagnosticAttempt.work),
+            )
+            .order_by(
+                DiagnosticAttempt.status.asc(),
+                desc(DiagnosticAttempt.submitted_at).nullslast(),
+                desc(DiagnosticAttempt.created_at),
+            )
+        )
+    )
+    diagnostic_counts = {
+        "all": len(all_attempts),
+        "needs_review": sum(1 for attempt in all_attempts if attempt.status == "submitted"),
+        "in_progress": sum(1 for attempt in all_attempts if attempt.status == "in_progress"),
+        "reviewed": sum(1 for attempt in all_attempts if attempt.status == "reviewed"),
+    }
+    if view == "all":
+        attempts = all_attempts
+    elif view == "in_progress":
+        attempts = [attempt for attempt in all_attempts if attempt.status == "in_progress"]
+    elif view == "reviewed":
+        attempts = [attempt for attempt in all_attempts if attempt.status == "reviewed"]
+    else:
+        view = "needs_review"
+        attempts = [attempt for attempt in all_attempts if attempt.status == "submitted"]
+
+    return templates.TemplateResponse(
+        request,
+        "admin_diagnostics.html",
+        {
+            "request": request,
+            "attempts": attempts,
+            "diagnostic_counts": diagnostic_counts,
+            "selected_view": view,
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.get("/diagnostic-solutions/{answer_id}")
+def diagnostic_solution_file(answer_id: int, request: Request, db: Session = Depends(get_db)):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    answer = db.get(DiagnosticAnswer, answer_id)
+    if (
+        answer is None
+        or not answer.solution_storage_path
+        or not answer.solution_filename
+        or not Path(answer.solution_storage_path).exists()
+    ):
+        raise HTTPException(status_code=404)
+    return FileResponse(
+        answer.solution_storage_path,
+        media_type=answer.solution_content_type or "application/octet-stream",
+        filename=answer.solution_filename,
+    )
+
+
+@router.get("/diagnostics/{attempt_id}")
+def diagnostic_review_page(
+    attempt_id: int,
+    request: Request,
+    reviewed: int | None = None,
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    attempt = _load_diagnostic_attempt(attempt_id, db)
+    if attempt is None:
+        return RedirectResponse("/admin/diagnostics", status_code=303)
+
+    answers_by_task = {answer.task_id: answer for answer in attempt.answers}
+    current_score = (
+        attempt.manual_score
+        if attempt.manual_score is not None
+        else sum(answer_score(answers_by_task.get(task.id)) for task in attempt.work.tasks)
+    )
+    return templates.TemplateResponse(
+        request,
+        "admin_diagnostic_review.html",
+        {
+            "request": request,
+            "attempt": attempt,
+            "student": attempt.student,
+            "work": attempt.work,
+            "tasks": attempt.work.tasks,
+            "answers_by_task": answers_by_task,
+            "current_score": current_score,
+            "scale_band": get_scale_band(current_score, attempt.work.exam_type),
+            "reviewed": reviewed == 1,
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.post("/diagnostics/{attempt_id}/review")
+async def review_diagnostic_attempt(
+    attempt_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    attempt = _load_diagnostic_attempt(attempt_id, db)
+    if attempt is None:
+        return RedirectResponse("/admin/diagnostics", status_code=303)
+
+    form = await request.form()
+    answers_by_task = {answer.task_id: answer for answer in attempt.answers}
+    total_score = 0
+    for task in attempt.work.tasks:
+        answer = answers_by_task.get(task.id)
+        if answer is None:
+            answer = DiagnosticAnswer(attempt_id=attempt.id, task_id=task.id)
+            db.add(answer)
+            answers_by_task[task.id] = answer
+
+        raw_score = str(form.get(f"score_{task.id}", "0"))
+        try:
+            teacher_score = int(raw_score)
+        except ValueError:
+            teacher_score = 0
+        teacher_score = min(max(teacher_score, 0), task.max_score)
+        answer.teacher_score = teacher_score
+        answer.teacher_comment = str(form.get(f"comment_{task.id}", "")).strip()
+        total_score += teacher_score
+
+    band = get_scale_band(total_score, attempt.work.exam_type)
+    attempt.status = "reviewed"
+    attempt.reviewed_at = datetime.utcnow()
+    attempt.manual_score = total_score
+    attempt.conclusion = (
+        f"{band['level']}. {band['conclusion']} "
+        f"Первый фокус: {band['focus']} Ориентир: {band['target']}"
+    )
+    attempt.parent_message = build_parent_message(
+        attempt.work,
+        list(attempt.work.tasks),
+        answers_by_task,
+        total_score,
+    )
+    db.commit()
+    return RedirectResponse(f"/admin/diagnostics/{attempt.id}?reviewed=1", status_code=303)
 
 
 @router.post("/leads/{lead_id}/status")
@@ -377,6 +573,7 @@ def student_detail(
             selectinload(Student.homework_items),
             selectinload(Student.materials).selectinload(Material.lesson_report),
             selectinload(Student.checkpoints),
+            selectinload(Student.diagnostic_attempts).selectinload(DiagnosticAttempt.work),
         )
     )
     if student is None:
