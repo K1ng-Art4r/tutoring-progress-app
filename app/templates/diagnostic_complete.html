@@ -31,7 +31,7 @@
     </article>
     <article class="content-block">
       <h2>Сообщение для родителя</h2>
-      <p>{{ attempt.parent_message|nl2br|safe }}</p>
+      <div class="parent-message">{{ attempt.parent_message|rich_text }}</div>
     </article>
   </section>
 

@@ -1822,6 +1822,56 @@ form,
   margin-bottom: 0;
 }
 
+.parent-message {
+  display: grid;
+  gap: 12px;
+  line-height: 1.65;
+}
+
+.parent-message p {
+  margin: 0;
+}
+
+.parent-message h3 {
+  margin: 8px 0 0;
+  color: var(--green-strong);
+  font-size: 16px;
+}
+
+.parent-message h3:first-child {
+  margin-top: 0;
+}
+
+.parent-message ul {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.parent-message li {
+  position: relative;
+  padding-left: 20px;
+}
+
+.parent-message li::before {
+  content: "";
+  position: absolute;
+  top: 0.72em;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 0 4px var(--green-soft);
+}
+
+.parent-message strong {
+  color: var(--green-strong);
+  font-weight: 850;
+}
+
 .pricing-hero {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;

@@ -44,7 +44,7 @@
     </article>
     <article class="content-block">
       <h2>Что написать родителям</h2>
-      <p>{{ attempt.parent_message|nl2br|safe }}</p>
+      <div class="parent-message">{{ attempt.parent_message|rich_text }}</div>
     </article>
   </section>
 {% endif %}
