@@ -11,8 +11,12 @@
   </div>
   <div class="timer-card">
     <span>Осталось времени</span>
-    <strong id="diagnostic-timer" data-remaining="{{ remaining_seconds }}">40:00</strong>
-    <small>Ответы сохраняются только по кнопке «Сохранить ответ».</small>
+    <strong
+      id="diagnostic-timer"
+      data-remaining="{{ remaining_seconds }}"
+      data-expires-at="{{ attempt.expires_at.isoformat() }}Z"
+    >40:00</strong>
+    <small>Черновик ответа остается в поле, но засчитывается только после кнопки «Сохранить ответ».</small>
   </div>
 </section>
 
@@ -89,6 +93,9 @@
           action="/cabinet/{{ student.access_token }}/diagnostics/attempts/{{ attempt.id }}/answers/{{ task.id }}"
           class="diagnostic-answer-form"
           enctype="multipart/form-data"
+          data-diagnostic-answer-form
+          data-task-id="{{ task.id }}"
+          data-task-position="{{ task.position }}"
         >
           <label>
             Ответ
@@ -120,10 +127,21 @@
 <script>
   const timerNode = document.getElementById("diagnostic-timer");
   const finishForm = document.getElementById("finish-form");
+  const expiresAt = Date.parse(timerNode.dataset.expiresAt || "");
   let remaining = Number(timerNode.dataset.remaining || 0);
   let submittedByTimer = false;
+  const attemptStorageKey = "diagnostic:attempt:{{ attempt.id }}";
+  const activeTaskStorageKey = `${attemptStorageKey}:active-task`;
+
+  function currentRemainingSeconds() {
+    if (Number.isFinite(expiresAt)) {
+      return Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+    }
+    return Math.max(remaining, 0);
+  }
 
   function renderTimer() {
+    remaining = currentRemainingSeconds();
     const minutes = Math.floor(Math.max(remaining, 0) / 60);
     const seconds = Math.max(remaining, 0) % 60;
     timerNode.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
@@ -132,7 +150,6 @@
 
   renderTimer();
   const tick = window.setInterval(() => {
-    remaining -= 1;
     renderTimer();
     if (remaining <= 0 && !submittedByTimer) {
       submittedByTimer = true;
@@ -143,6 +160,7 @@
 
   const panels = document.querySelectorAll("[data-task-panel]");
   const buttons = document.querySelectorAll("[data-task-target]");
+  const answerForms = document.querySelectorAll("[data-diagnostic-answer-form]");
 
   function openTask(position) {
     panels.forEach((panel) => {
@@ -151,12 +169,52 @@
     buttons.forEach((button) => {
       button.classList.toggle("is-active", button.dataset.taskPosition === String(position));
     });
+    localStorage.setItem(activeTaskStorageKey, String(position));
   }
 
   buttons.forEach((button) => {
     button.addEventListener("click", () => openTask(button.dataset.taskPosition));
   });
 
-  openTask("{{ active_task or saved_task or 1 }}");
+  answerForms.forEach((form) => {
+    const input = form.querySelector('input[name="answer_text"]');
+    if (!input) return;
+
+    const draftKey = `${attemptStorageKey}:task:${form.dataset.taskId}:answer-text`;
+    const navButton = Array.from(buttons).find(
+      (button) => button.dataset.taskPosition === form.dataset.taskPosition,
+    );
+    const savedValue = input.defaultValue || "";
+    const draftValue = localStorage.getItem(draftKey);
+    if (!savedValue && draftValue !== null) {
+      input.value = draftValue;
+    } else if (savedValue && draftValue !== null && draftValue !== savedValue) {
+      input.value = draftValue;
+    }
+
+    function syncSavedState() {
+      if (!navButton) return;
+      navButton.classList.toggle("is-saved", Boolean(savedValue) && input.value === savedValue);
+    }
+
+    syncSavedState();
+
+    input.addEventListener("input", () => {
+      localStorage.setItem(draftKey, input.value);
+      syncSavedState();
+    });
+
+    form.addEventListener("submit", () => {
+      localStorage.setItem(draftKey, input.value);
+      localStorage.setItem(activeTaskStorageKey, form.dataset.taskPosition || "1");
+    });
+  });
+
+  window.addEventListener("pageshow", () => {
+    renderTimer();
+  });
+
+  const serverInitialTask = "{{ active_task or saved_task or '' }}";
+  openTask(serverInitialTask || localStorage.getItem(activeTaskStorageKey) || "1");
 </script>
 {% endblock %}

@@ -44,7 +44,7 @@ def status_class(value: str) -> str:
 
 
 def cabinet_url(access_token: str) -> str:
-    return f"{settings.public_base_url.rstrip('/')}/cabinet/{access_token}"
+    return f"/cabinet/{access_token}"
 
 
 templates.env.filters["date"] = format_date

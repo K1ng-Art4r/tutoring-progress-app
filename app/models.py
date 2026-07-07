@@ -21,7 +21,7 @@ TOPIC_STATUSES = [
 TOPIC_STATUS_LABELS = {
     "not_started": "Не начали",
     "explained": "Объяснено",
-    "with_help": "Решает с помощью",
+    "with_help": "Решает с подсказкой",
     "independent": "Решает самостоятельно",
     "ready_for_test": "Готово к проверке",
 }
