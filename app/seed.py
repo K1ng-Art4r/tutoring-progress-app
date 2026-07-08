@@ -111,9 +111,17 @@ def seed_demo_data(db: Session) -> Student:
 
     student = db.scalar(select(Student).where(Student.access_token == DEMO_ACCESS_TOKEN))
     if student is None:
-        student = Student(access_token=DEMO_ACCESS_TOKEN)
+        student = Student(
+            access_token=DEMO_ACCESS_TOKEN,
+            access_code=DEMO_ACCESS_CODE,
+            name="Анна К.",
+            parent_name="Мария",
+            parent_contact="@demo_parent",
+            subject=DEMO_SUBJECT,
+            goal="Уверенно подготовиться к ОГЭ по математике и выйти на стабильную оценку 4/5.",
+            status="active",
+        )
         db.add(student)
-        db.flush()
 
     student.access_code = DEMO_ACCESS_CODE
     student.name = "Анна К."
@@ -357,6 +365,13 @@ def seed_demo_data(db: Session) -> Student:
     db.commit()
     db.refresh(student)
     return student
+
+
+def reset_students_to_demo(db: Session) -> Student:
+    for student in list(db.scalars(select(Student))):
+        db.delete(student)
+    db.flush()
+    return seed_demo_data(db)
 
 
 def ensure_demo_data(db: Session) -> Student:
