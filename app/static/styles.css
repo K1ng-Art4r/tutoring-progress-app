@@ -525,6 +525,42 @@ form,
   margin-bottom: 16px;
 }
 
+.format-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 24px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+
+.format-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.format-demo-panel {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #c8dfce;
+  border-radius: var(--radius);
+  background: #f7fff8;
+  padding: 18px;
+  box-shadow: 0 10px 26px rgba(24, 74, 46, 0.06);
+}
+
+.format-demo-panel strong {
+  color: var(--green-strong);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.format-demo-panel p {
+  margin-bottom: 0;
+}
+
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2058,6 +2094,7 @@ form,
   .hero,
   .teacher-hero,
   .teaching-philosophy,
+  .format-layout,
   .feature-grid,
   .about-grid,
   .achievement-grid,
@@ -2134,6 +2171,7 @@ form,
   }
 
   .diagnostic-start-card,
+  .format-demo-panel,
   .timer-card,
   .pricing-note,
   .cabinet-status {
@@ -2325,10 +2363,12 @@ form,
   }
 
   .button,
+  .format-actions,
   .button-row {
     width: 100%;
   }
 
+  .format-actions,
   .button-row {
     display: grid;
     grid-template-columns: 1fr;

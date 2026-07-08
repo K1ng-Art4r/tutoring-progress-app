@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from app.auth import attach_student_login_cookie
 from app.database import get_db
 from app.models import Lead
 from app.options import CLASS_OPTIONS, GOAL_OPTIONS, SUBJECT_OPTIONS
+from app.seed import ensure_demo_data
 from app.view_helpers import templates
 
 router = APIRouter()
@@ -27,6 +29,14 @@ def landing(request: Request, sent: int | None = None):
             "noindex": False,
         },
     )
+
+
+@router.get("/demo")
+def demo_cabinet(db: Session = Depends(get_db)):
+    student = ensure_demo_data(db)
+    response = RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
+    attach_student_login_cookie(response, student.access_token)
+    return response
 
 
 @router.get("/about")
