@@ -1988,13 +1988,29 @@ form,
   display: flex;
   flex-wrap: wrap;
   gap: 8px 12px;
-  align-items: baseline;
+  align-items: center;
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   padding: 16px 0;
 }
 
-.price-line strong {
+.price-stack {
+  display: grid;
+  gap: 4px;
+}
+
+.old-price {
+  width: fit-content;
+  color: #8a978d;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.price-line strong,
+.new-price {
   color: var(--green-strong);
   font-size: 42px;
   line-height: 1;
@@ -2003,6 +2019,15 @@ form,
 .price-line span {
   color: var(--muted);
   font-weight: 800;
+}
+
+.price-line .sale-badge {
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green-strong);
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 900;
 }
 
 .pricing-list {
