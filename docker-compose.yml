@@ -25,6 +25,8 @@ services:
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
       TUTOR_NAME: ${TUTOR_NAME:-Ваш преподаватель}
       TELEGRAM_URL: ${TELEGRAM_URL:-https://t.me/}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
       WHATSAPP_URL: ${WHATSAPP_URL:-https://wa.me/}
       UPLOAD_DIR: /app/uploads
     ports:

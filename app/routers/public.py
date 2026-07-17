@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth import attach_student_login_cookie
 from app.database import get_db
 from app.models import Lead
+from app.notifications import notify_new_lead
 from app.options import CLASS_OPTIONS, GOAL_OPTIONS, SUBJECT_OPTIONS
 from app.seed import ensure_demo_data
 from app.view_helpers import templates
@@ -87,6 +88,8 @@ def create_request(
     )
     db.add(lead)
     db.commit()
+    db.refresh(lead)
+    notify_new_lead(lead)
     return RedirectResponse("/?sent=1#contact", status_code=303)
 
 

@@ -44,6 +44,8 @@ class Settings:
     seed_demo_data: bool = _bool_env("SEED_DEMO_DATA", True)
     tutor_name: str = os.getenv("TUTOR_NAME", "Ваш преподаватель")
     telegram_url: str = os.getenv("TELEGRAM_URL", "https://t.me/")
+    telegram_bot_token: str = os.getenv("TELEGRAM_BOT_TOKEN", "")
+    telegram_chat_id: str = os.getenv("TELEGRAM_CHAT_ID", "")
     whatsapp_url: str = os.getenv("WHATSAPP_URL", "https://wa.me/")
     upload_dir: Path = Path(os.getenv("UPLOAD_DIR", "uploads"))
 
