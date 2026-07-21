@@ -189,6 +189,32 @@ def _diagnostic_points(attempt: DiagnosticAttempt) -> float:
     return _clip_level(score / attempt.work.max_score) * OGE_TOTAL_POINTS
 
 
+def _forecast_points_from_diagnostics(
+    mastery_points: float,
+    diagnostic_records: list[DiagnosticAttempt],
+) -> int:
+    recent_diagnostic_points = [_diagnostic_points(attempt) for attempt in diagnostic_records[-3:]]
+    diagnostic_points = (
+        sum(recent_diagnostic_points) / len(recent_diagnostic_points)
+        if recent_diagnostic_points
+        else None
+    )
+    forecast_float = (
+        mastery_points * 0.8 + diagnostic_points * 0.2
+        if diagnostic_points is not None
+        else mastery_points
+    )
+    return min(max(round(forecast_float), 0), OGE_TOTAL_POINTS)
+
+
+def _attempt_date(attempt: DiagnosticAttempt) -> date:
+    if attempt.reviewed_at:
+        return attempt.reviewed_at.date()
+    if attempt.submitted_at:
+        return attempt.submitted_at.date()
+    return attempt.created_at.date()
+
+
 def _reviewed_oge_attempts(attempts: list[DiagnosticAttempt]) -> list[DiagnosticAttempt]:
     return [
         attempt
@@ -332,26 +358,24 @@ def build_student_forecast(
         if recent_diagnostic_points
         else None
     )
-    forecast_float = (
-        mastery_points * 0.8 + diagnostic_points * 0.2
-        if diagnostic_points is not None
-        else mastery_points
-    )
-    forecast_points = min(max(round(forecast_float), 0), OGE_TOTAL_POINTS)
+    forecast_points = _forecast_points_from_diagnostics(mastery_points, diagnostic_records)
     grade = _oge_grade(forecast_points, geometry_points)
     geometry_display = min(max(round(geometry_points), 0), OGE_GEOMETRY_POINTS)
 
     if diagnostic_records:
-        history = [
-            {
-                "date": attempt.reviewed_at.date()
-                if attempt.reviewed_at
-                else (attempt.submitted_at.date() if attempt.submitted_at else attempt.created_at.date()),
-                "label": attempt.work.title,
-                "points": round(_diagnostic_points(attempt)),
-            }
-            for attempt in diagnostic_records[-4:]
-        ]
+        diagnostic_history = []
+        for index, attempt in enumerate(diagnostic_records):
+            diagnostic_history.append(
+                {
+                    "date": _attempt_date(attempt),
+                    "label": f"Прогноз после диагностики: {attempt.work.title}",
+                    "points": _forecast_points_from_diagnostics(
+                        mastery_points,
+                        diagnostic_records[: index + 1],
+                    ),
+                }
+            )
+        history = diagnostic_history[-4:]
         if history[-1]["date"] != date.today() or history[-1]["points"] != forecast_points:
             history.append({"date": date.today(), "label": "Текущий прогноз", "points": forecast_points})
     else:
