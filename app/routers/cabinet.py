@@ -119,6 +119,19 @@ def cabinet_login_page(
     if not error:
         saved_access_token = student_access_token_from_cookie(request)
         if saved_access_token:
+            if saved_access_token == DEMO_ACCESS_TOKEN:
+                response = templates.TemplateResponse(
+                    request,
+                    "cabinet_login.html",
+                    {
+                        "request": request,
+                        "error": False,
+                        "is_admin": False,
+                        "noindex": True,
+                    },
+                )
+                clear_student_login_cookie(response)
+                return response
             student = _student_by_token(saved_access_token, db)
             if student is not None:
                 return RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)

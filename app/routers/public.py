@@ -4,8 +4,9 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
-from app.auth import attach_student_login_cookie
+from app.auth import attach_student_login_cookie, clear_student_login_cookie, student_access_token_from_cookie
 from app.database import get_db
+from app.demo import DEMO_ACCESS_TOKEN
 from app.models import Lead
 from app.notifications import notify_new_lead
 from app.options import CLASS_OPTIONS, GOAL_OPTIONS, SUBJECT_OPTIONS
@@ -15,9 +16,16 @@ from app.view_helpers import templates
 router = APIRouter()
 
 
+def _public_page(request: Request, template_name: str, context: dict):
+    response = templates.TemplateResponse(request, template_name, context)
+    if student_access_token_from_cookie(request) == DEMO_ACCESS_TOKEN:
+        clear_student_login_cookie(response)
+    return response
+
+
 @router.get("/")
 def landing(request: Request, sent: int | None = None):
-    return templates.TemplateResponse(
+    return _public_page(
         request,
         "public.html",
         {
@@ -42,7 +50,7 @@ def demo_cabinet(db: Session = Depends(get_db)):
 
 @router.get("/about")
 def about_teacher(request: Request):
-    return templates.TemplateResponse(
+    return _public_page(
         request,
         "about.html",
         {
@@ -55,7 +63,7 @@ def about_teacher(request: Request):
 
 @router.get("/format")
 def format_page(request: Request):
-    return templates.TemplateResponse(
+    return _public_page(
         request,
         "format.html",
         {
@@ -73,7 +81,7 @@ def methodology_page(request: Request):
 
 @router.get("/pricing")
 def pricing(request: Request):
-    return templates.TemplateResponse(
+    return _public_page(
         request,
         "pricing.html",
         {
