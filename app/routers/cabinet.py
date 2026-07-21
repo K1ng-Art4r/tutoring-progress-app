@@ -20,6 +20,7 @@ from app.models import (
     Material,
     Student,
 )
+from app.progress_forecast import build_student_forecast, ensure_oge_competency_topics
 from app.view_helpers import templates
 
 router = APIRouter(prefix="/cabinet")
@@ -141,7 +142,7 @@ def student_cabinet(
     error: str | None = None,
     db: Session = Depends(get_db),
 ):
-    student = db.scalar(
+    student_query = (
         select(Student)
         .where(Student.access_token == access_token, Student.status != "archived")
         .options(
@@ -153,6 +154,7 @@ def student_cabinet(
             selectinload(Student.diagnostic_attempts).selectinload(DiagnosticAttempt.work),
         )
     )
+    student = db.scalar(student_query)
     if student is None:
         return templates.TemplateResponse(
             request,
@@ -160,6 +162,8 @@ def student_cabinet(
             {"request": request, "is_admin": False, "noindex": True},
             status_code=404,
         )
+    if ensure_oge_competency_topics(db, student):
+        student = db.scalar(student_query)
 
     current_homework = [item for item in student.homework_items if not item.is_completed]
     completed_homework = [item for item in student.homework_items if item.is_completed]
@@ -183,6 +187,7 @@ def student_cabinet(
     latest_diagnostic_attempts = {}
     for attempt in diagnostic_attempts:
         latest_diagnostic_attempts.setdefault(attempt.work_id, attempt)
+    forecast = build_student_forecast(student, diagnostic_attempts)
 
     response = templates.TemplateResponse(
         request,
@@ -195,6 +200,7 @@ def student_cabinet(
             "latest_report": latest_report,
             "diagnostic_works": diagnostic_works,
             "latest_diagnostic_attempts": latest_diagnostic_attempts,
+            "forecast": forecast,
             "uploaded": uploaded == 1,
             "error": error,
             "is_admin": False,

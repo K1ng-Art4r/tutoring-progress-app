@@ -4,7 +4,7 @@ import secrets
 import string
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -16,14 +16,25 @@ TOPIC_STATUSES = [
     "with_help",
     "independent",
     "ready_for_test",
+    "stable",
 ]
 
 TOPIC_STATUS_LABELS = {
     "not_started": "Не начали",
-    "explained": "Объяснено",
+    "explained": "Понимает идею",
     "with_help": "Решает с подсказкой",
-    "independent": "Решает самостоятельно",
-    "ready_for_test": "Готово к проверке",
+    "independent": "Решает типовые самостоятельно",
+    "ready_for_test": "Решает уверенно в формате ОГЭ",
+    "stable": "Стабильно и без ошибок",
+}
+
+TOPIC_STATUS_LEVELS = {
+    "not_started": 0.0,
+    "explained": 0.25,
+    "with_help": 0.5,
+    "independent": 0.75,
+    "ready_for_test": 0.9,
+    "stable": 1.0,
 }
 
 STUDENT_STATUSES = ["active", "paused", "archived"]
@@ -147,8 +158,12 @@ class TopicProgress(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     student_id: Mapped[int] = mapped_column(ForeignKey("students.id", ondelete="CASCADE"))
     topic: Mapped[str] = mapped_column(String(220))
+    competency_key: Mapped[str] = mapped_column(String(120), default="")
+    weight: Mapped[int] = mapped_column(Integer, default=1)
+    mastery_level: Mapped[float] = mapped_column(Float, default=0.0)
     status: Mapped[str] = mapped_column(String(40), default="not_started")
     comment: Mapped[str] = mapped_column(Text, default="")
+    insufficient_data: Mapped[bool] = mapped_column(Boolean, default=False)
 
     student: Mapped[Student] = relationship(back_populates="topics")
 

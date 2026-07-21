@@ -176,6 +176,11 @@ form,
 .review-task-card > *,
 .pricing-card > *,
 .lead-card > *,
+.forecast-main-card > *,
+.geometry-card > *,
+.forecast-chart-card > *,
+.forecast-explanation > *,
+.competency-card > *,
 .homework-item > * {
   min-width: 0;
 }
@@ -1034,6 +1039,7 @@ form,
 .badge.approved,
 .badge.independent,
 .badge.ready-for-test,
+.badge.stable,
 .badge.reviewed {
   background: var(--green-soft);
   color: var(--green);
@@ -1467,6 +1473,323 @@ form,
   border-radius: var(--radius);
   background: var(--surface);
   padding: 16px;
+}
+
+.cabinet-workspace {
+  display: grid;
+  gap: 18px;
+  padding-top: 18px;
+}
+
+.cabinet-tabs {
+  display: flex;
+  gap: 8px;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.88);
+  padding: 8px;
+  box-shadow: 0 10px 24px rgba(24, 74, 46, 0.05);
+  -webkit-overflow-scrolling: touch;
+}
+
+.cabinet-tab {
+  flex: 0 0 auto;
+  min-height: 40px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--green);
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+  transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.cabinet-tab:hover,
+.cabinet-tab.is-active {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(23, 114, 69, 0.18);
+}
+
+.cabinet-tab-panel {
+  display: none;
+}
+
+.cabinet-tab-panel.is-active {
+  display: grid;
+  gap: 18px;
+}
+
+.forecast-topline {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  gap: 18px;
+}
+
+.forecast-main-card,
+.geometry-card,
+.forecast-chart-card,
+.forecast-explanation,
+.competency-card,
+.forecast-impact-list article {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(24, 74, 46, 0.07);
+}
+
+.forecast-main-card {
+  display: grid;
+  gap: 10px;
+  border-color: #b7ddc1;
+  background: linear-gradient(180deg, #ffffff 0%, #f4fff7 100%);
+  padding: 24px;
+}
+
+.forecast-main-card strong {
+  color: var(--green-strong);
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.forecast-main-card p {
+  margin-bottom: 0;
+  color: #405146;
+  font-weight: 800;
+}
+
+.geometry-card {
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 22px;
+}
+
+.geometry-card strong {
+  color: var(--green-strong);
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.geometry-card p {
+  margin-bottom: 0;
+  color: #405146;
+}
+
+.geometry-card.is-risk {
+  border-color: #ffc2b8;
+  background: var(--red-soft);
+}
+
+.geometry-card.is-risk strong {
+  color: var(--red);
+}
+
+.forecast-chart-card {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+
+.forecast-chart-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.forecast-chart-head h2 {
+  margin-bottom: 0;
+}
+
+.forecast-chart {
+  display: block;
+  width: 100%;
+  min-height: 260px;
+  overflow: visible;
+}
+
+.forecast-chart .zone-5 {
+  fill: #e1f3e8;
+}
+
+.forecast-chart .zone-4 {
+  fill: #edf8df;
+}
+
+.forecast-chart .zone-3 {
+  fill: #fff4dc;
+}
+
+.forecast-chart .zone-2 {
+  fill: #ffece8;
+}
+
+.forecast-grid-line {
+  stroke: rgba(23, 35, 28, 0.13);
+  stroke-width: 1;
+}
+
+.forecast-axis {
+  stroke: #789182;
+  stroke-width: 1.4;
+}
+
+.forecast-line {
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.forecast-point {
+  fill: #fff;
+  stroke: var(--green-strong);
+  stroke-width: 4;
+}
+
+.forecast-point-label,
+.forecast-zone-label,
+.forecast-axis-label,
+.forecast-date-label {
+  fill: #405146;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.forecast-point-label,
+.forecast-date-label {
+  text-anchor: middle;
+}
+
+.forecast-date-label {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.forecast-explanation {
+  display: grid;
+  gap: 6px;
+  border-color: #c8dfce;
+  background: var(--mint);
+  padding: 18px;
+}
+
+.forecast-explanation strong {
+  color: var(--green-strong);
+}
+
+.forecast-explanation p {
+  margin-bottom: 0;
+  color: #405146;
+}
+
+.forecast-impact-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.forecast-impact-list article {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+.forecast-impact-list p {
+  margin-bottom: 0;
+}
+
+.material-list-wide {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.competency-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.competency-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+}
+
+.competency-card.needs-data {
+  border-style: dashed;
+  background: #fffdf7;
+}
+
+.competency-card-head {
+  display: grid;
+  gap: 8px;
+}
+
+.competency-card-head h3,
+.competency-card p {
+  margin-bottom: 0;
+}
+
+.competency-progress {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e3ebe5;
+}
+
+.competency-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--green-strong), #45a46c);
+}
+
+.competency-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.competency-card small {
+  color: var(--amber);
+  font-weight: 750;
+}
+
+.plan-dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.plan-dates > div {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fbfffc;
+  padding: 14px;
+}
+
+.plan-dates strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--green-strong);
+  font-size: 20px;
+}
+
+.reports-grid {
+  align-items: start;
 }
 
 .full-width {
@@ -2146,6 +2469,11 @@ form,
   .admin-columns,
   .cabinet-grid,
   .cabinet-hero,
+  .forecast-topline,
+  .forecast-impact-list,
+  .material-list-wide,
+  .competency-grid,
+  .plan-dates,
   .overview-band,
   .summary-grid,
   .stats-row,
@@ -2358,6 +2686,11 @@ form,
   .pricing-card,
   .pricing-compare,
   .latest-report,
+  .forecast-main-card,
+  .geometry-card,
+  .forecast-chart-card,
+  .forecast-explanation,
+  .competency-card,
   .completed-homework {
     padding: 16px;
   }
@@ -2381,6 +2714,37 @@ form,
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 4px;
+  }
+
+  .cabinet-tabs {
+    padding: 6px;
+  }
+
+  .cabinet-tab {
+    min-height: 38px;
+    padding: 7px 10px;
+    font-size: 14px;
+  }
+
+  .forecast-chart-head {
+    display: grid;
+  }
+
+  .forecast-chart {
+    min-height: 230px;
+  }
+
+  .forecast-main-card strong {
+    font-size: 31px;
+  }
+
+  .geometry-card strong,
+  .plan-dates strong {
+    font-size: 19px;
+  }
+
+  .competency-meta {
+    gap: 6px;
   }
 
   .filter-chip {
@@ -2549,5 +2913,10 @@ form,
 
   .preview-grid div {
     min-height: 0;
+  }
+
+  .forecast-zone-label,
+  .forecast-date-label {
+    display: none;
   }
 }

@@ -18,6 +18,7 @@ from app.models import (
     TopicProgress,
     make_access_code,
 )
+from app.progress_forecast import OGE_COMPETENCIES, status_for_level
 
 
 def _demo_date(days_from_today: int) -> date:
@@ -161,56 +162,37 @@ def seed_demo_data(db: Session) -> Student:
     _clear_demo_collections(student)
     db.flush()
 
+    demo_competency_state = {
+        "practical": (0.9, False, "Практические задачи уже дают основной прирост, закрепляем аккуратность в расчетах."),
+        "numbers_formulas": (0.75, False, "Базовые вычисления и формулы рабочие, иногда нужно замедлиться на знаках."),
+        "number_line": (0.5, True, "Мало отдельных данных, но базовая идея координатной прямой понятна."),
+        "equations": (0.9, False, "Линейные и простые квадратные уравнения решает уверенно."),
+        "probability_statistics": (0.5, True, "Есть понимание простых вероятностей, добавим статистику и таблицы."),
+        "functions_graphs": (0.5, False, "Графики читает с подсказкой, следующий шаг - устойчиво находить значения и нули функции."),
+        "inequalities_systems": (0.25, True, "Тему только начали, пока фиксируем базовую идею."),
+        "sequences_progressions": (0.25, True, "Данных мало, тема запланирована после функций."),
+        "geometry_first": (0.5, False, "Минимальный геометрический порог уже виден, но нужна регулярная тренировка."),
+        "algebra_second": (0.5, False, "Во второй части может начать решение, но пока нужен контроль плана."),
+        "word_problem_second": (0.5, False, "Схему текстовой задачи составляет с подсказкой, тренируем перевод условия в уравнение."),
+        "graphs_second": (0.5, True, "Пока мало данных, но базовое чтение графиков уже появилось."),
+        "geometry_second_compute": (0.5, False, "Вычислительную геометрию решает пошагово, без спешки получается лучше."),
+        "geometry_second_proof": (0.25, True, "Доказательства только начинаем: собираем базовые факты и оформление."),
+        "geometry_second_hard": (0.25, True, "Сложная геометрия пока не цель ближайших недель, оставляем рабочую стартовую отметку."),
+    }
     db.add_all(
         [
             TopicProgress(
                 student_id=student.id,
-                topic="Линейные уравнения",
-                status="ready_for_test",
-                comment="Решает самостоятельно, осталось закрепить скорость и аккуратность.",
-            ),
-            TopicProgress(
-                student_id=student.id,
-                topic="Проценты и пропорции",
-                status="independent",
-                comment="Базовые задачи решает без помощи, в сложных условиях проверяем схему.",
-            ),
-            TopicProgress(
-                student_id=student.id,
-                topic="Квадратные уравнения",
-                status="with_help",
-                comment="Алгоритм понятен, ошибки чаще всего в знаках и проверке корней.",
-            ),
-            TopicProgress(
-                student_id=student.id,
-                topic="Функции и графики",
-                status="explained",
-                comment="Разобрали линейную функцию, следующий шаг - чтение графиков.",
-            ),
-            TopicProgress(
-                student_id=student.id,
-                topic="Геометрия: треугольники",
-                status="with_help",
-                comment="Нужна тренировка высот, медиан, площадей и связи с окружностью.",
-            ),
-            TopicProgress(
-                student_id=student.id,
-                topic="Текстовые задачи",
-                status="explained",
-                comment="Учимся выделять величины, связь между ними и проверять смысл ответа.",
-            ),
-            TopicProgress(
-                student_id=student.id,
-                topic="Оформление второй части",
-                status="not_started",
-                comment="Запланировано после стабилизации базовой геометрии.",
-            ),
-            TopicProgress(
-                student_id=student.id,
-                topic="Стратегия экзамена",
-                status="independent",
-                comment="Есть порядок решения варианта и правило, когда переходить дальше.",
-            ),
+                topic=competency.title,
+                competency_key=competency.key,
+                weight=competency.weight,
+                mastery_level=level,
+                status=status_for_level(level),
+                insufficient_data=insufficient_data,
+                comment=comment,
+            )
+            for competency in OGE_COMPETENCIES
+            for level, insufficient_data, comment in [demo_competency_state[competency.key]]
         ]
     )
 

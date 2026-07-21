@@ -86,18 +86,45 @@
 <section class="section admin-columns topic-homework-grid">
   <div class="admin-panel">
     <div class="section-heading compact">
-      <h2>Темы и статусы</h2>
+      <h2>Компетенции и прогноз</h2>
+      {% if forecast.is_available %}
+        <p>{{ forecast.forecast_label }} · геометрия {{ forecast.geometry_points }} из {{ forecast.geometry_total }}</p>
+      {% else %}
+        <p>Для этого направления пока используется обычный список тем.</p>
+      {% endif %}
     </div>
     <div class="topic-admin-list">
       {% for topic in student.topics %}
         <form method="post" action="/admin/topics/{{ topic.id }}/update" class="topic-row-edit">
-          <input name="topic" value="{{ topic.topic }}" required>
-          <select name="status">
-            {% for status in topic_statuses %}
-              <option value="{{ status }}" {% if topic.status == status %}selected{% endif %}>{{ status|status_label }}</option>
-            {% endfor %}
-          </select>
-          <input name="comment" value="{{ topic.comment }}" placeholder="Короткий комментарий">
+          <input type="hidden" name="competency_key" value="{{ topic.competency_key }}">
+          <label>
+            Компетенция
+            <input name="topic" value="{{ topic.topic }}" required>
+          </label>
+          <label>
+            Статус
+            <select name="status">
+              {% for status in topic_statuses %}
+                <option value="{{ status }}" {% if topic.status == status %}selected{% endif %}>{{ status|status_label }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>
+            Уровень 0..1
+            <input name="mastery_level" type="number" min="0" max="1" step="0.05" value="{{ '%.2f'|format(topic.mastery_level or 0) }}">
+          </label>
+          <label>
+            Вес
+            <input name="weight" type="number" min="1" max="31" step="1" value="{{ topic.weight or 1 }}" {% if topic.competency_key %}readonly{% endif %}>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" name="insufficient_data" {% if topic.insufficient_data %}checked{% endif %}>
+            Недостаточно данных
+          </label>
+          <label>
+            Комментарий
+            <input name="comment" value="{{ topic.comment }}" placeholder="Короткий комментарий">
+          </label>
           <button class="button small secondary" type="submit">Сохранить</button>
         </form>
       {% else %}
@@ -111,6 +138,12 @@
           <option value="{{ status }}">{{ status|status_label }}</option>
         {% endfor %}
       </select>
+      <input name="mastery_level" type="number" min="0" max="1" step="0.05" placeholder="Уровень 0..1">
+      <input name="weight" type="number" min="1" max="31" step="1" value="1" placeholder="Вес">
+      <label class="checkbox-label">
+        <input type="checkbox" name="insufficient_data">
+        Недостаточно данных
+      </label>
       <input name="comment" placeholder="Комментарий">
       <button class="button secondary" type="submit">Добавить тему</button>
     </form>

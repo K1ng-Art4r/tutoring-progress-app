@@ -28,6 +28,7 @@ from app.models import (
     Student,
     TopicProgress,
     Lead,
+    TOPIC_STATUS_LEVELS,
     TOPIC_STATUSES,
     make_access_code,
 )
@@ -36,6 +37,11 @@ from app.options import (
     HOMEWORK_FORMAT_OPTIONS,
     MATERIAL_KIND_OPTIONS,
     SUBJECT_OPTIONS,
+)
+from app.progress_forecast import (
+    build_student_forecast,
+    calibrate_oge_competencies_from_attempt,
+    ensure_oge_competency_topics,
 )
 from app.view_helpers import templates
 
@@ -76,6 +82,22 @@ def _make_unique_access_code(db: Session) -> str:
         exists = db.scalar(select(Student.id).where(Student.access_code == code).limit(1))
         if exists is None:
             return code
+
+
+def _parse_mastery_level(value: str, status: str) -> float:
+    if value.strip():
+        try:
+            return min(max(float(value.replace(",", ".")), 0.0), 1.0)
+        except ValueError:
+            pass
+    return float(TOPIC_STATUS_LEVELS.get(status, 0.0))
+
+
+def _parse_weight(value: str, fallback: int = 1) -> int:
+    try:
+        return min(max(int(value), 1), 31)
+    except ValueError:
+        return fallback
 
 
 def _load_diagnostic_attempt(attempt_id: int, db: Session) -> DiagnosticAttempt | None:
@@ -408,6 +430,7 @@ async def review_diagnostic_attempt(
         answers_by_task,
         total_score,
     )
+    calibrate_oge_competencies_from_attempt(db, attempt)
     db.commit()
     return RedirectResponse(f"/admin/diagnostics/{attempt.id}?reviewed=1", status_code=303)
 
@@ -550,6 +573,7 @@ def create_student(
             lead.status = "approved"
     db.commit()
     db.refresh(student)
+    ensure_oge_competency_topics(db, student)
     return RedirectResponse(f"/admin/students/{student.id}?created=1", status_code=303)
 
 
@@ -565,7 +589,7 @@ def student_detail(
     if redirect:
         return redirect
 
-    student = db.scalar(
+    student_query = (
         select(Student)
         .where(Student.id == student_id)
         .options(
@@ -577,8 +601,13 @@ def student_detail(
             selectinload(Student.diagnostic_attempts).selectinload(DiagnosticAttempt.work),
         )
     )
+    student = db.scalar(student_query)
     if student is None:
         return RedirectResponse("/admin", status_code=303)
+    if ensure_oge_competency_topics(db, student):
+        student = db.scalar(student_query)
+    diagnostic_attempts = list(student.diagnostic_attempts)
+    forecast = build_student_forecast(student, diagnostic_attempts)
 
     return templates.TemplateResponse(
         request,
@@ -587,6 +616,8 @@ def student_detail(
             "request": request,
             "student": student,
             "topic_statuses": TOPIC_STATUSES,
+            "topic_status_levels": TOPIC_STATUS_LEVELS,
+            "forecast": forecast,
             "student_statuses": STUDENT_STATUSES,
             "created": created == 1,
             "error": error,
@@ -667,6 +698,7 @@ def update_student(
     student.next_lesson_focus = next_lesson_focus.strip()
     student.status = status if status in STUDENT_STATUSES else "active"
     db.commit()
+    ensure_oge_competency_topics(db, student)
     return _redirect_to_student(student.id)
 
 
@@ -677,6 +709,10 @@ def add_topic(
     topic: Annotated[str, Form()],
     status: Annotated[str, Form()] = "not_started",
     comment: Annotated[str, Form()] = "",
+    competency_key: Annotated[str, Form()] = "",
+    weight: Annotated[str, Form()] = "1",
+    mastery_level: Annotated[str, Form()] = "",
+    insufficient_data: Annotated[str | None, Form()] = None,
     db: Session = Depends(get_db),
 ):
     redirect = _require_admin(request)
@@ -685,12 +721,17 @@ def add_topic(
     student = _student_or_redirect(student_id, db)
     if student is None:
         return RedirectResponse("/admin", status_code=303)
+    selected_status = status if status in TOPIC_STATUSES else "not_started"
     db.add(
         TopicProgress(
             student_id=student.id,
             topic=topic.strip(),
-            status=status if status in TOPIC_STATUSES else "not_started",
+            competency_key=competency_key.strip(),
+            weight=_parse_weight(weight),
+            mastery_level=_parse_mastery_level(mastery_level, selected_status),
+            status=selected_status,
             comment=comment.strip(),
+            insufficient_data=insufficient_data == "on",
         )
     )
     db.commit()
@@ -704,6 +745,10 @@ def update_topic(
     topic: Annotated[str, Form()],
     status: Annotated[str, Form()] = "not_started",
     comment: Annotated[str, Form()] = "",
+    competency_key: Annotated[str, Form()] = "",
+    weight: Annotated[str, Form()] = "1",
+    mastery_level: Annotated[str, Form()] = "",
+    insufficient_data: Annotated[str | None, Form()] = None,
     db: Session = Depends(get_db),
 ):
     redirect = _require_admin(request)
@@ -712,9 +757,14 @@ def update_topic(
     item = db.get(TopicProgress, topic_id)
     if item is None:
         return RedirectResponse("/admin", status_code=303)
+    selected_status = status if status in TOPIC_STATUSES else item.status
     item.topic = topic.strip()
-    item.status = status if status in TOPIC_STATUSES else item.status
+    item.competency_key = competency_key.strip()
+    item.weight = _parse_weight(weight, item.weight)
+    item.mastery_level = _parse_mastery_level(mastery_level, selected_status)
+    item.status = selected_status
     item.comment = comment.strip()
+    item.insufficient_data = insufficient_data == "on"
     db.commit()
     return _redirect_to_student(item.student_id)
 
