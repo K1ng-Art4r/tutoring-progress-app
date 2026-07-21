@@ -168,6 +168,9 @@ form,
 .feature-card > *,
 .about-card > *,
 .achievement-card > *,
+.home-hero-header > *,
+.home-hero-main > *,
+.hero-bullet-card > *,
 .topic-card > *,
 .report-card > *,
 .checkpoint-card > *,
@@ -384,38 +387,61 @@ form,
 .home-hero {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(420px, 0.94fr);
-  align-items: center;
-  gap: clamp(28px, 4vw, 54px);
-  min-height: calc(100vh - 86px);
-  padding-top: 52px;
+  gap: clamp(28px, 4vw, 48px);
+  width: min(1880px, calc(100vw - 96px));
+  min-height: calc(100vh - 64px);
+  padding-top: 38px;
   padding-bottom: 76px;
+}
+
+.home-hero-header {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.home-hero-header p {
+  max-width: 880px;
+  margin-bottom: 0;
+  color: #405146;
+  font-size: clamp(18px, 1.4vw, 24px);
+  line-height: 1.45;
+}
+
+.home-hero-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr);
+  align-items: stretch;
+  gap: clamp(28px, 4vw, 64px);
 }
 
 .home-demo-chart-card {
   display: grid;
   gap: 18px;
+  align-content: center;
   border: 1px solid #c8dfce;
   border-radius: var(--radius);
   background: linear-gradient(180deg, #ffffff 0%, #f8fff9 100%);
-  padding: clamp(18px, 2.2vw, 26px);
+  padding: clamp(22px, 2.8vw, 38px);
   box-shadow: var(--shadow);
 }
 
 .home-demo-chart {
-  min-height: 330px;
+  min-height: clamp(380px, 32vw, 560px);
 }
 
 .home-hero-brand {
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 18px;
   max-width: none;
 }
 
 .home-hero-brand img {
   flex: 0 0 auto;
-  width: clamp(76px, 8vw, 112px);
+  width: clamp(76px, 7vw, 122px);
   aspect-ratio: 1;
   border-radius: 20px;
   background: #fff;
@@ -425,39 +451,59 @@ form,
 .home-hero-brand h1 {
   max-width: none;
   margin-bottom: 0;
-  font-size: clamp(44px, 5vw, 72px);
+  font-size: clamp(54px, 6.8vw, 116px);
   line-height: 0.95;
-}
-
-.home-hero-brand p {
-  max-width: 620px;
-  margin-bottom: 0;
-  color: #405146;
-  font-size: 18px;
 }
 
 .home-hero-copy {
   display: grid;
-  gap: 22px;
+  align-content: center;
+  gap: 24px;
 }
 
 .hero-bullets {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: clamp(14px, 1.5vw, 22px);
   width: 100%;
   text-align: left;
 }
 
-.hero-bullets p {
-  min-height: 150px;
+.hero-bullet-card {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+  min-height: clamp(190px, 14vw, 250px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: #fff;
-  margin-bottom: 0;
-  padding: 16px;
+  padding: clamp(18px, 2vw, 28px);
   color: #405146;
   box-shadow: 0 10px 26px rgba(24, 74, 46, 0.05);
+}
+
+.hero-bullet-card span {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--green-soft);
+  color: var(--green);
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.hero-bullet-card p {
+  margin-bottom: 0;
+  color: #405146;
+  font-size: clamp(18px, 1.35vw, 24px);
+  line-height: 1.45;
+}
+
+.hero-bullet-card strong {
+  color: var(--text);
+  font-weight: 900;
 }
 
 .home-hero-action {
@@ -466,9 +512,10 @@ form,
 }
 
 .hero-request-button {
-  position: absolute;
-  right: 0;
-  bottom: 28px;
+  position: fixed;
+  right: clamp(16px, 2vw, 34px);
+  top: 50%;
+  z-index: 35;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -480,6 +527,7 @@ form,
   padding: 10px 16px;
   font-weight: 900;
   box-shadow: var(--shadow);
+  transform: translateY(-50%);
 }
 
 .hero-request-button:hover {
@@ -2650,6 +2698,7 @@ form,
 
   .hero,
   .home-hero,
+  .home-hero-main,
   .hero-bullets,
   .teacher-hero,
   .teaching-philosophy,
@@ -2698,6 +2747,7 @@ form,
 
   .home-hero {
     min-height: auto;
+    width: min(100vw - 32px, 1180px);
   }
 
   .home-hero-brand {
@@ -2708,12 +2758,6 @@ form,
   .home-hero-action {
     justify-content: center;
     width: 100%;
-  }
-
-  .hero-request-button {
-    position: static;
-    width: 100%;
-    order: 10;
   }
 
   .admin-actions {
@@ -2892,12 +2936,26 @@ form,
     align-items: center;
   }
 
-  .home-hero-brand p {
+  .home-hero-header p {
     font-size: 16px;
   }
 
   .home-demo-chart {
     min-height: 250px;
+  }
+
+  .hero-bullet-card {
+    min-height: 0;
+  }
+
+  .hero-request-button {
+    right: 12px;
+    top: auto;
+    bottom: 14px;
+    min-height: 40px;
+    padding: 9px 13px;
+    font-size: 14px;
+    transform: none;
   }
 
   .hero-proof {
