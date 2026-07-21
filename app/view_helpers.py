@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import hashlib
 import html
 import re
 from datetime import date, datetime
+from functools import lru_cache
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
@@ -131,6 +133,17 @@ def cabinet_url(access_token: str) -> str:
     return f"/cabinet/{access_token}"
 
 
+@lru_cache(maxsize=64)
+def static_asset(url: str) -> str:
+    if not url.startswith("/static/"):
+        return url
+    path = BASE_DIR / "static" / url.removeprefix("/static/")
+    if not path.is_file():
+        return url
+    version = hashlib.sha256(path.read_bytes()).hexdigest()[:12]
+    return f"{url}?v={version}"
+
+
 templates.env.filters["date"] = format_date
 templates.env.filters["nl2br"] = nl2br
 templates.env.filters["rich_text"] = rich_text
@@ -138,3 +151,4 @@ templates.env.filters["status_label"] = status_label
 templates.env.filters["status_class"] = status_class
 templates.env.globals["settings"] = settings
 templates.env.globals["cabinet_url"] = cabinet_url
+templates.env.globals["static_asset"] = static_asset
