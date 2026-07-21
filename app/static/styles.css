@@ -1774,18 +1774,10 @@ form,
 .confidence-toolbar {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
 }
 
-.confidence-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-}
-
-.confidence-filter-button,
 .confidence-sort-button {
   min-height: 36px;
   border: 1px solid var(--border);
@@ -1801,13 +1793,10 @@ form,
 }
 
 .confidence-sort-button {
-  flex: 0 0 auto;
   border-color: #b7ddc1;
   background: var(--green-soft);
 }
 
-.confidence-filter-button:hover,
-.confidence-filter-button.is-active,
 .confidence-sort-button:hover,
 .confidence-sort-button.is-active {
   border-color: var(--green);
@@ -2832,14 +2821,7 @@ form,
   }
 
   .confidence-toolbar {
-    display: grid;
-    gap: 10px;
-  }
-
-  .confidence-filter {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    display: flex;
   }
 
   .confidence-sort-button {

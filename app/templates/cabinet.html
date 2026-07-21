@@ -248,16 +248,7 @@
     </div>
     {% if forecast.is_available %}
       <div class="confidence-toolbar">
-        <div class="confidence-filter" aria-label="Фильтр по уверенности в теме">
-          <button class="confidence-filter-button is-active" type="button" data-confidence-all>Все</button>
-          <button class="confidence-filter-button" type="button" data-confidence-filter="not_started">Не начали</button>
-          <button class="confidence-filter-button" type="button" data-confidence-filter="explained">Понимает идею</button>
-          <button class="confidence-filter-button" type="button" data-confidence-filter="with_help">С подсказкой</button>
-          <button class="confidence-filter-button" type="button" data-confidence-filter="independent">Самостоятельно</button>
-          <button class="confidence-filter-button" type="button" data-confidence-filter="ready_for_test">Формат ОГЭ</button>
-          <button class="confidence-filter-button" type="button" data-confidence-filter="stable">Без ошибок</button>
-        </div>
-        <button class="confidence-sort-button" type="button" data-confidence-sort>Сильные сверху</button>
+        <button class="confidence-sort-button" type="button" data-confidence-sort>Отфильтровать</button>
       </div>
       <div class="competency-grid" data-competency-grid>
         {% for item in forecast.competencies %}
@@ -409,59 +400,26 @@
   (() => {
     const tabs = [...document.querySelectorAll("[data-cabinet-tab]")];
     const panels = [...document.querySelectorAll("[data-cabinet-panel]")];
-    const confidenceAllButton = document.querySelector("[data-confidence-all]");
-    const confidenceButtons = [...document.querySelectorAll("[data-confidence-filter]")];
     const confidenceSortButton = document.querySelector("[data-confidence-sort]");
     const competencyGrid = document.querySelector("[data-competency-grid]");
     const competencyCards = [...document.querySelectorAll("[data-confidence-status]")];
-    const confidenceEmpty = document.querySelector(".confidence-empty");
-    let sortStrongFirst = false;
-
-    const selectedConfidenceStatuses = () => (
-      confidenceButtons
-        .filter((button) => button.classList.contains("is-active"))
-        .map((button) => button.dataset.confidenceFilter)
-    );
 
     const reorderCompetencies = () => {
       if (!competencyGrid) {
         return;
       }
       const sortedCards = [...competencyCards].sort((left, right) => {
-        if (!sortStrongFirst) {
-          return Number(left.dataset.originalIndex) - Number(right.dataset.originalIndex);
+        const weightDelta = Number(right.dataset.confidenceWeight) - Number(left.dataset.confidenceWeight);
+        if (weightDelta !== 0) {
+          return weightDelta;
         }
         const levelDelta = Number(right.dataset.confidenceLevel) - Number(left.dataset.confidenceLevel);
         if (levelDelta !== 0) {
           return levelDelta;
         }
-        const weightDelta = Number(right.dataset.confidenceWeight) - Number(left.dataset.confidenceWeight);
-        if (weightDelta !== 0) {
-          return weightDelta;
-        }
         return Number(left.dataset.originalIndex) - Number(right.dataset.originalIndex);
       });
       sortedCards.forEach((card) => competencyGrid.appendChild(card));
-    };
-
-    const applyConfidenceView = () => {
-      const selectedStatuses = selectedConfidenceStatuses();
-      const showAll = selectedStatuses.length === 0;
-      if (confidenceAllButton) {
-        confidenceAllButton.classList.toggle("is-active", showAll);
-      }
-      let visibleCount = 0;
-      competencyCards.forEach((card) => {
-        const shouldShow = showAll || selectedStatuses.includes(card.dataset.confidenceStatus);
-        card.hidden = !shouldShow;
-        if (shouldShow) {
-          visibleCount += 1;
-        }
-      });
-      reorderCompetencies();
-      if (confidenceEmpty) {
-        confidenceEmpty.hidden = visibleCount > 0;
-      }
     };
 
     tabs.forEach((tab) => {
@@ -473,26 +431,11 @@
         });
       });
     });
-    if (confidenceAllButton) {
-      confidenceAllButton.addEventListener("click", () => {
-        confidenceButtons.forEach((button) => button.classList.remove("is-active"));
-        applyConfidenceView();
-      });
-    }
-    confidenceButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        button.classList.toggle("is-active");
-        applyConfidenceView();
-      });
-    });
     if (confidenceSortButton) {
       confidenceSortButton.addEventListener("click", () => {
-        sortStrongFirst = !sortStrongFirst;
-        confidenceSortButton.classList.toggle("is-active", sortStrongFirst);
-        confidenceSortButton.textContent = sortStrongFirst ? "Вернуть порядок" : "Сильные сверху";
-        applyConfidenceView();
+        confidenceSortButton.classList.add("is-active");
+        reorderCompetencies();
       });
-      applyConfidenceView();
     }
   })();
 </script>
