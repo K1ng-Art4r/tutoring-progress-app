@@ -76,7 +76,7 @@
         <svg class="forecast-chart" viewBox="0 0 {{ forecast.chart.width }} {{ forecast.chart.height }}" role="img" aria-label="График прогноза ученика">
           {% for zone in forecast.chart.zones %}
             <rect class="{{ zone.class }}" x="{{ zone.x }}" y="{{ zone.y }}" width="{{ zone.width }}" height="{{ zone.height }}" rx="6"></rect>
-            <text class="forecast-zone-label" x="666" y="{{ zone.label_y }}">оценка {{ zone.grade }}</text>
+            <text class="forecast-zone-label {{ zone.class }}-label" x="86" y="{{ zone.label_y }}">ОЦЕНКА {{ zone.grade }}</text>
           {% endfor %}
           {% for tick in forecast.chart.ticks %}
             <line class="forecast-grid-line" x1="54" x2="682" y1="{{ tick.y }}" y2="{{ tick.y }}"></line>
@@ -156,35 +156,47 @@
   </div>
 
   <div class="cabinet-tab-panel" data-cabinet-panel="homework">
-    <div class="cabinet-grid">
-      <article class="content-block highlight-block">
+    <div class="homework-student-stack">
+      <div>
         <h2>Текущие домашние задания</h2>
-        {% for item in current_homework %}
-          <div class="homework-item">
-            <strong>{{ item.title }}</strong>
-            <p>{{ item.description }}</p>
-            <span class="muted">Срок: {{ item.due_date|date }}</span>
-            {% if item.attachment_filename %}
-              <a class="file-pill" href="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/file" target="_blank" rel="noreferrer">Открыть PDF: {{ item.attachment_filename }}</a>
-            {% endif %}
-            {% if item.solution_filename %}
-              <span class="file-pill solution-pill">Решение отправлено: {{ item.solution_filename }}</span>
-            {% endif %}
-            <details class="solution-panel">
-              <summary class="button small secondary">Прикрепить решение</summary>
-              <form method="post" action="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/solution" class="stacked-form small-gap" enctype="multipart/form-data">
-                <label>
-                  PDF с решением
-                  <input name="solution_file" type="file" accept="application/pdf,.pdf" required>
-                </label>
-                <button class="button primary" type="submit">Отправить решение</button>
-              </form>
-            </details>
-          </div>
-        {% else %}
-          <p class="muted">Активного домашнего задания сейчас нет.</p>
-        {% endfor %}
-      </article>
+        <div class="homework-student-grid">
+          {% for item in current_homework %}
+            <article class="homework-student-card highlight-block">
+              <div class="homework-card-head">
+                <div>
+                  <strong>{{ item.title }}</strong>
+                  <span class="muted block">Срок: {{ item.due_date|date }}</span>
+                </div>
+                <span class="badge with-help">Активно</span>
+              </div>
+              <p>{{ item.description }}</p>
+              <div class="homework-link-row">
+                {% if item.attachment_filename %}
+                  <a class="file-pill" href="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/file" target="_blank" rel="noreferrer">Открыть PDF: {{ item.attachment_filename }}</a>
+                {% endif %}
+                {% if item.solution_filename %}
+                  <span class="file-pill solution-pill">Решение отправлено: {{ item.solution_filename }}</span>
+                {% endif %}
+              </div>
+              <details class="solution-panel">
+                <summary class="button small secondary">Прикрепить решение</summary>
+                <form method="post" action="/cabinet/{{ student.access_token }}/homework/{{ item.id }}/solution" class="stacked-form small-gap" enctype="multipart/form-data">
+                  <label>
+                    PDF с решением
+                    <input name="solution_file" type="file" accept="application/pdf,.pdf" required>
+                  </label>
+                  <button class="button primary" type="submit">Отправить решение</button>
+                </form>
+              </details>
+            </article>
+          {% else %}
+            <div class="empty-state">
+              <h3>Активного домашнего задания сейчас нет</h3>
+              <p>После следующего урока преподаватель добавит сюда актуальные задания и срок.</p>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
 
       <article class="content-block">
         <h2>История выполненных ДЗ</h2>
@@ -235,9 +247,18 @@
       <p>Здесь видно, какие части экзамена уже дают баллы, а какие пока держат прогноз ниже цели.</p>
     </div>
     {% if forecast.is_available %}
+      <div class="confidence-filter" aria-label="Фильтр по уверенности в теме">
+        <button class="confidence-filter-button is-active" type="button" data-confidence-filter="all">Все</button>
+        <button class="confidence-filter-button" type="button" data-confidence-filter="not_started">Не начали</button>
+        <button class="confidence-filter-button" type="button" data-confidence-filter="explained">Понимает идею</button>
+        <button class="confidence-filter-button" type="button" data-confidence-filter="with_help">С подсказкой</button>
+        <button class="confidence-filter-button" type="button" data-confidence-filter="independent">Самостоятельно</button>
+        <button class="confidence-filter-button" type="button" data-confidence-filter="ready_for_test">Формат ОГЭ</button>
+        <button class="confidence-filter-button" type="button" data-confidence-filter="stable">Без ошибок</button>
+      </div>
       <div class="competency-grid">
         {% for item in forecast.competencies %}
-          <article class="competency-card {% if item.insufficient_data %}needs-data{% endif %}">
+          <article class="competency-card {% if item.insufficient_data %}needs-data{% endif %}" data-confidence-status="{{ item.status }}">
             <div class="competency-card-head">
               <h3>{{ item.title }}</h3>
               <span class="badge {{ item.status|status_class }}">{{ item.status_label }}</span>
@@ -260,6 +281,7 @@
           </article>
         {% endfor %}
       </div>
+      <p class="muted confidence-empty" hidden>По этому уровню уверенности сейчас нет тем.</p>
     {% else %}
       <div class="topic-grid">
         {% for topic in student.topics %}
@@ -331,7 +353,7 @@
       </article>
     {% endif %}
 
-    <div class="cabinet-grid reports-grid">
+    <div class="reports-stack">
       <article class="content-block">
         <h2>Все отчеты</h2>
         <div class="timeline">
@@ -384,6 +406,9 @@
   (() => {
     const tabs = [...document.querySelectorAll("[data-cabinet-tab]")];
     const panels = [...document.querySelectorAll("[data-cabinet-panel]")];
+    const confidenceButtons = [...document.querySelectorAll("[data-confidence-filter]")];
+    const competencyCards = [...document.querySelectorAll("[data-confidence-status]")];
+    const confidenceEmpty = document.querySelector(".confidence-empty");
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => {
         const target = tab.dataset.cabinetTab;
@@ -391,6 +416,23 @@
         panels.forEach((panel) => {
           panel.classList.toggle("is-active", panel.dataset.cabinetPanel === target);
         });
+      });
+    });
+    confidenceButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const selectedStatus = button.dataset.confidenceFilter;
+        confidenceButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+        let visibleCount = 0;
+        competencyCards.forEach((card) => {
+          const shouldShow = selectedStatus === "all" || card.dataset.confidenceStatus === selectedStatus;
+          card.hidden = !shouldShow;
+          if (shouldShow) {
+            visibleCount += 1;
+          }
+        });
+        if (confidenceEmpty) {
+          confidenceEmpty.hidden = visibleCount > 0;
+        }
       });
     });
   })();

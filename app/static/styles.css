@@ -1408,6 +1408,37 @@ form,
   border-bottom: 0;
 }
 
+.homework-student-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.homework-student-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.homework-student-card {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 12px 30px rgba(24, 74, 46, 0.07);
+}
+
+.homework-student-card > * {
+  min-width: 0;
+}
+
+.homework-student-card p {
+  margin-bottom: 0;
+}
+
 .topic-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1664,6 +1695,29 @@ form,
   font-weight: 800;
 }
 
+.forecast-zone-label {
+  font-size: 30px;
+  font-weight: 950;
+  letter-spacing: 0;
+  opacity: 0.34;
+}
+
+.zone-5-label {
+  fill: #1d7b4f;
+}
+
+.zone-4-label {
+  fill: #6f9f36;
+}
+
+.zone-3-label {
+  fill: #b17a16;
+}
+
+.zone-2-label {
+  fill: #bf4b3d;
+}
+
 .forecast-point-label,
 .forecast-date-label {
   text-anchor: middle;
@@ -1715,6 +1769,34 @@ form,
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+}
+
+.confidence-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.confidence-filter-button {
+  min-height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--green-strong);
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 850;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.confidence-filter-button:hover,
+.confidence-filter-button.is-active {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(23, 114, 69, 0.14);
 }
 
 .competency-card {
@@ -1786,6 +1868,11 @@ form,
   margin-top: 4px;
   color: var(--green-strong);
   font-size: 20px;
+}
+
+.reports-stack {
+  display: grid;
+  gap: 18px;
 }
 
 .reports-grid {
@@ -2473,6 +2560,7 @@ form,
   .forecast-impact-list,
   .material-list-wide,
   .competency-grid,
+  .homework-student-grid,
   .plan-dates,
   .overview-band,
   .summary-grid,
@@ -2915,8 +3003,11 @@ form,
     min-height: 0;
   }
 
-  .forecast-zone-label,
   .forecast-date-label {
     display: none;
+  }
+
+  .forecast-zone-label {
+    font-size: 22px;
   }
 }
