@@ -11,6 +11,7 @@ from app.auth import (
     attach_login_cookie,
     attach_student_login_cookie,
     clear_student_login_cookie,
+    is_admin as has_teacher_session,
     student_access_token_from_cookie,
 )
 from app.config import settings
@@ -117,6 +118,8 @@ def cabinet_login_page(
     db: Session = Depends(get_db),
 ):
     if not error:
+        if has_teacher_session(request):
+            return RedirectResponse("/admin", status_code=303)
         saved_access_token = student_access_token_from_cookie(request)
         if saved_access_token:
             if saved_access_token == DEMO_ACCESS_TOKEN:

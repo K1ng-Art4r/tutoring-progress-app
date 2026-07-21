@@ -11,9 +11,9 @@ from fastapi.responses import RedirectResponse
 from app.config import settings
 
 COOKIE_NAME = "teacher_session"
-MAX_AGE_SECONDS = 60 * 60 * 24 * 7
-STUDENT_COOKIE_NAME = "student_session"
 STUDENT_MAX_AGE_SECONDS = 60 * 60 * 24 * 60
+MAX_AGE_SECONDS = STUDENT_MAX_AGE_SECONDS
+STUDENT_COOKIE_NAME = "student_session"
 
 
 def _sign(payload: str) -> str:
