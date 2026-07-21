@@ -66,6 +66,11 @@ def format_page(request: Request):
     )
 
 
+@router.get("/methodology")
+def methodology_page(request: Request):
+    return format_page(request)
+
+
 @router.get("/pricing")
 def pricing(request: Request):
     return templates.TemplateResponse(

@@ -7,7 +7,12 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.auth import attach_login_cookie, attach_student_login_cookie
+from app.auth import (
+    attach_login_cookie,
+    attach_student_login_cookie,
+    clear_student_login_cookie,
+    student_access_token_from_cookie,
+)
 from app.config import settings
 from app.database import get_db
 from app.demo import DEMO_ACCESS_TOKEN
@@ -109,7 +114,15 @@ def _first_unsaved_task_position(
 def cabinet_login_page(
     request: Request,
     error: int | None = None,
+    db: Session = Depends(get_db),
 ):
+    if not error:
+        saved_access_token = student_access_token_from_cookie(request)
+        if saved_access_token:
+            student = _student_by_token(saved_access_token, db)
+            if student is not None:
+                return RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
+
     return templates.TemplateResponse(
         request,
         "cabinet_login.html",
@@ -149,6 +162,13 @@ def cabinet_login(
         return RedirectResponse("/cabinet/login?error=1", status_code=303)
     response = RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
     attach_student_login_cookie(response, student.access_token)
+    return response
+
+
+@router.post("/logout")
+def cabinet_logout():
+    response = RedirectResponse("/cabinet/login", status_code=303)
+    clear_student_login_cookie(response)
     return response
 
 

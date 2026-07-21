@@ -387,11 +387,11 @@ form,
 .home-hero {
   position: relative;
   display: grid;
-  gap: clamp(28px, 4vw, 48px);
+  gap: clamp(18px, 2.4vw, 30px);
   width: min(1880px, calc(100vw - 96px));
   min-height: calc(100vh - 64px);
-  padding-top: 38px;
-  padding-bottom: 76px;
+  padding-top: 22px;
+  padding-bottom: 44px;
 }
 
 .home-hero-header {
@@ -405,7 +405,7 @@ form,
   max-width: 880px;
   margin-bottom: 0;
   color: #405146;
-  font-size: clamp(18px, 1.4vw, 24px);
+  font-size: clamp(17px, 1.25vw, 22px);
   line-height: 1.45;
 }
 
@@ -418,17 +418,17 @@ form,
 
 .home-demo-chart-card {
   display: grid;
-  gap: 18px;
+  gap: 14px;
   align-content: center;
   border: 1px solid #c8dfce;
   border-radius: var(--radius);
   background: linear-gradient(180deg, #ffffff 0%, #f8fff9 100%);
-  padding: clamp(22px, 2.8vw, 38px);
+  padding: clamp(18px, 2vw, 28px);
   box-shadow: var(--shadow);
 }
 
 .home-demo-chart {
-  min-height: clamp(380px, 32vw, 560px);
+  min-height: clamp(300px, 23vw, 410px);
 }
 
 .home-hero-brand {
@@ -441,7 +441,7 @@ form,
 
 .home-hero-brand img {
   flex: 0 0 auto;
-  width: clamp(76px, 7vw, 122px);
+  width: clamp(66px, 5.2vw, 94px);
   aspect-ratio: 1;
   border-radius: 20px;
   background: #fff;
@@ -451,14 +451,14 @@ form,
 .home-hero-brand h1 {
   max-width: none;
   margin-bottom: 0;
-  font-size: clamp(54px, 6.8vw, 116px);
+  font-size: clamp(48px, 5vw, 86px);
   line-height: 0.95;
 }
 
 .home-hero-copy {
   display: grid;
   align-content: center;
-  gap: 24px;
+  gap: 18px;
 }
 
 .hero-bullets {
@@ -472,12 +472,12 @@ form,
 .hero-bullet-card {
   display: grid;
   align-content: start;
-  gap: 16px;
-  min-height: clamp(190px, 14vw, 250px);
+  gap: 12px;
+  min-height: clamp(120px, 8.5vw, 155px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: #fff;
-  padding: clamp(18px, 2vw, 28px);
+  padding: clamp(14px, 1.25vw, 19px);
   color: #405146;
   box-shadow: 0 10px 26px rgba(24, 74, 46, 0.05);
 }
@@ -485,20 +485,20 @@ form,
 .hero-bullet-card span {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 8px;
   background: var(--green-soft);
   color: var(--green);
-  font-size: 22px;
+  font-size: 19px;
   font-weight: 950;
 }
 
 .hero-bullet-card p {
   margin-bottom: 0;
   color: #405146;
-  font-size: clamp(18px, 1.35vw, 24px);
-  line-height: 1.45;
+  font-size: clamp(15px, 0.95vw, 18px);
+  line-height: 1.36;
 }
 
 .hero-bullet-card strong {
@@ -514,7 +514,7 @@ form,
 .hero-request-button {
   position: fixed;
   right: clamp(16px, 2vw, 34px);
-  top: 50%;
+  bottom: clamp(16px, 2vw, 34px);
   z-index: 35;
   display: inline-flex;
   align-items: center;
@@ -527,7 +527,7 @@ form,
   padding: 10px 16px;
   font-weight: 900;
   box-shadow: var(--shadow);
-  transform: translateY(-50%);
+  transform: none;
 }
 
 .hero-request-button:hover {
@@ -1713,6 +1713,12 @@ form,
 .cabinet-tab-panel.is-active {
   display: grid;
   gap: 18px;
+}
+
+.cabinet-logout-section {
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
 }
 
 .forecast-topline {
