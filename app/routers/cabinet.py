@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.auth import attach_student_login_cookie, student_access_token_from_cookie
 from app.database import get_db
+from app.demo import DEMO_ACCESS_TOKEN
 from app.diagnostic_logic import finalize_attempt, score_answer
 from app.file_uploads import save_diagnostic_solution_upload, save_pdf_upload
 from app.models import (
@@ -21,6 +22,7 @@ from app.models import (
     Student,
 )
 from app.progress_forecast import build_student_forecast, ensure_oge_competency_topics
+from app.seed import seed_demo_data
 from app.view_helpers import templates
 
 router = APIRouter(prefix="/cabinet")
@@ -162,6 +164,9 @@ def student_cabinet(
             {"request": request, "is_admin": False, "noindex": True},
             status_code=404,
         )
+    if access_token == DEMO_ACCESS_TOKEN:
+        seed_demo_data(db)
+        student = db.scalar(student_query)
     if ensure_oge_competency_topics(db, student):
         student = db.scalar(student_query)
 

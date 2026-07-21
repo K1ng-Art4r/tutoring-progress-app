@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models import Lead
 from app.notifications import notify_new_lead
 from app.options import CLASS_OPTIONS, GOAL_OPTIONS, SUBJECT_OPTIONS
-from app.seed import ensure_demo_data
+from app.seed import seed_demo_data
 from app.view_helpers import templates
 
 router = APIRouter()
@@ -34,7 +34,7 @@ def landing(request: Request, sent: int | None = None):
 
 @router.get("/demo")
 def demo_cabinet(db: Session = Depends(get_db)):
-    student = ensure_demo_data(db)
+    student = seed_demo_data(db)
     response = RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
     attach_student_login_cookie(response, student.access_token)
     return response

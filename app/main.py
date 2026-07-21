@@ -4,11 +4,14 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import select
 from starlette.responses import FileResponse, Response
 
 from app.config import settings
 from app.database import SessionLocal, init_database
 from app.diagnostics_data import seed_diagnostic_works
+from app.models import Student
+from app.progress_forecast import ensure_oge_competency_topics
 from app.routers import admin, cabinet, public
 from app.seed import seed_demo_data
 
@@ -18,6 +21,9 @@ async def lifespan(app: FastAPI):
     init_database()
     with SessionLocal() as db:
         seed_diagnostic_works(db)
+        for student in db.scalars(select(Student)).all():
+            ensure_oge_competency_topics(db, student, commit=False)
+        db.commit()
         if settings.seed_demo_data:
             seed_demo_data(db)
     yield
