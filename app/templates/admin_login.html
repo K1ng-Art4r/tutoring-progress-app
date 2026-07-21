@@ -7,14 +7,18 @@
   <div class="auth-box">
     <p class="eyebrow">Админка</p>
     <h1>Вход преподавателя</h1>
-    <p>Введите пароль.</p>
+    <p>Введите логин и пароль.</p>
     {% if error %}
-      <div class="notice danger">Пароль не подошел.</div>
+      <div class="notice danger">Логин или пароль не подошли.</div>
     {% endif %}
-    <form method="post" action="/admin/login">
+    <form method="post" action="/admin/login" class="stacked-form">
+      <label>
+        Логин
+        <input name="username" autocomplete="username" required autofocus>
+      </label>
       <label>
         Пароль
-        <input name="password" type="password" required autofocus>
+        <input name="password" type="password" autocomplete="current-password" required>
       </label>
       <button class="button primary" type="submit">Войти</button>
     </form>

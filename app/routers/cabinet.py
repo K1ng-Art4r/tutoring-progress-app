@@ -7,7 +7,8 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.auth import attach_student_login_cookie, student_access_token_from_cookie
+from app.auth import attach_login_cookie, attach_student_login_cookie, student_access_token_from_cookie
+from app.config import settings
 from app.database import get_db
 from app.demo import DEMO_ACCESS_TOKEN
 from app.diagnostic_logic import finalize_attempt, score_answer
@@ -32,6 +33,17 @@ def _student_by_token(access_token: str, db: Session) -> Student | None:
     return db.scalar(
         select(Student).where(Student.access_token == access_token, Student.status != "archived")
     )
+
+
+def _normalize_login(value: str) -> str:
+    return " ".join(value.strip().casefold().split())
+
+
+def _student_login_matches(student: Student, login_name: str) -> bool:
+    normalized_login = _normalize_login(login_name)
+    normalized_student_name = _normalize_login(student.name)
+    first_name = normalized_student_name.split(" ", 1)[0]
+    return normalized_login in {normalized_student_name, first_name}
 
 
 def _remaining_seconds(attempt: DiagnosticAttempt) -> int:
@@ -119,7 +131,19 @@ def cabinet_login_page(
 
 
 @router.post("/login")
-def cabinet_login(code: str = Form(...), db: Session = Depends(get_db)):
+def cabinet_login(
+    username: str = Form(...),
+    code: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    login_name = username.strip()
+    if login_name == settings.teacher_login:
+        if code != settings.teacher_password:
+            return RedirectResponse("/cabinet/login?error=1", status_code=303)
+        response = RedirectResponse("/admin", status_code=303)
+        attach_login_cookie(response)
+        return response
+
     normalized_code = "".join(char for char in code.strip() if char.isdigit())
     if len(normalized_code) != 10:
         return RedirectResponse("/cabinet/login?error=1", status_code=303)
@@ -129,7 +153,7 @@ def cabinet_login(code: str = Form(...), db: Session = Depends(get_db)):
             Student.status != "archived",
         )
     )
-    if student is None:
+    if student is None or not _student_login_matches(student, login_name):
         return RedirectResponse("/cabinet/login?error=1", status_code=303)
     response = RedirectResponse(f"/cabinet/{student.access_token}", status_code=303)
     attach_student_login_cookie(response, student.access_token)

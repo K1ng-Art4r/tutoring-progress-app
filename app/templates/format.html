@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Формат занятий и личный кабинет · Вектор решений{% endblock %}
+
+{% block content %}
+<section class="section format-hero">
+  <div>
+    <p class="eyebrow">Как устроено</p>
+    <h1>Не просто «был урок», а понятная картина движения</h1>
+    <p class="hero-text">
+      Личный кабинет показывает, какая цель у занятий, где ученик находится сейчас,
+      что делаем ближайшие недели и как меняется результат после диагностики, уроков и домашних заданий.
+    </p>
+    <div class="button-row">
+      <a class="button primary" href="/demo">Посмотреть ЛК</a>
+      <a class="button secondary" href="/#contact">Оставить заявку</a>
+    </div>
+  </div>
+  <figure class="format-hero-image">
+    <img src="{{ static_asset('/static/vector-solutions-logo.png') }}" alt="Логотип Вектор решений">
+  </figure>
+</section>
+
+<section class="section">
+  <div class="section-heading">
+    <p class="eyebrow">Процесс</p>
+    <h2>От диагностики до понятного прогресса</h2>
+    <p>Каждый блок кабинета отвечает на конкретный вопрос родителя или ученика.</p>
+  </div>
+  <div class="format-flow-grid">
+    <article class="format-screen-card">
+      <span class="feature-icon">1</span>
+      <h3>Стартовая диагностика</h3>
+      <div class="mini-screen">
+        <b>20 минут</b>
+        <span>Ответы + решения</span>
+        <i style="width: 82%"></i>
+      </div>
+      <p>Ученик проходит работу с таймером, сохраняет ответы и прикрепляет решения там, где нужен ход рассуждений.</p>
+    </article>
+    <article class="format-screen-card">
+      <span class="feature-icon">2</span>
+      <h3>План на 2-4 недели</h3>
+      <div class="mini-screen">
+        <b>Фокус</b>
+        <span>Проценты, уравнения, геометрия</span>
+        <i style="width: 64%"></i>
+      </div>
+      <p>После проверки фиксируется стартовая точка, ближайший фокус и темы, которые дают максимальный прирост.</p>
+    </article>
+    <article class="format-screen-card">
+      <span class="feature-icon">3</span>
+      <h3>Материалы и ДЗ</h3>
+      <div class="mini-screen">
+        <b>Доска урока</b>
+        <span>PDF с домашним заданием</span>
+        <i style="width: 48%"></i>
+      </div>
+      <p>Ссылки на доски, конспекты и файлы домашних заданий лежат рядом с датой и названием занятия.</p>
+    </article>
+    <article class="format-screen-card">
+      <span class="feature-icon">4</span>
+      <h3>Отчеты и чекпоинты</h3>
+      <div class="mini-screen">
+        <b>Прогноз</b>
+        <span>17 из 31 → оценка 4</span>
+        <i style="width: 70%"></i>
+      </div>
+      <p>После уроков видно, что прошло хорошо, что еще мешает и как меняется общий прогноз.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section band">
+  <div class="section-heading">
+    <p class="eyebrow">Что внутри ЛК</p>
+    <h2>Разделы, которые помогают не теряться в подготовке</h2>
+  </div>
+  <div class="feature-grid expanded">
+    <article class="feature-card">
+      <span class="feature-icon">1</span>
+      <h3>Цель и стартовый уровень</h3>
+      <p>Зафиксировано, к чему готовимся, какие пробелы нашли и с чего начинаем работу.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">2</span>
+      <h3>Диагностика</h3>
+      <p>Работа показывает формат заданий, ответов, баллов, комментариев и рекомендаций.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">3</span>
+      <h3>План</h3>
+      <p>Видно, какие темы закрываем сейчас, когда будет чекпоинт и какой следующий фокус.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">4</span>
+      <h3>Домашние задания</h3>
+      <p>Актуальные задания, сроки, выполненные работы и возможность прикрепить решение в PDF.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">5</span>
+      <h3>Отчеты после уроков</h3>
+      <p>Что прошли, что получилось, где слабое место и какой комментарий важен родителю.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">6</span>
+      <h3>Темы</h3>
+      <p>Прогресс фиксируется по компетенциям: видно процент освоения, вес темы и комментарий.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">7</span>
+      <h3>Материалы</h3>
+      <p>Ссылки на конспекты, доски уроков, таблицы прогресса и планы подготовки лежат в одном месте.</p>
+    </article>
+    <article class="feature-card">
+      <span class="feature-icon">8</span>
+      <h3>Чекпоинты</h3>
+      <p>Раз в несколько недель видно, что было, что стало, что улучшилось и что делаем дальше.</p>
+    </article>
+  </div>
+</section>
+{% endblock %}

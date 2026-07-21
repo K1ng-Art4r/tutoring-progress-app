@@ -24,7 +24,7 @@ def _lead_message(lead: Lead) -> str:
         [
             "<b>Новая заявка с сайта</b>",
             "",
-            f"<b>Родитель:</b> {_format_value(lead.parent_name)}",
+            f"<b>Контактное лицо:</b> {_format_value(lead.parent_name)}",
             f"<b>Класс:</b> {_format_value(lead.student_class)}",
             f"<b>Направление:</b> {_format_value(lead.subject)}",
             f"<b>Цель:</b> {_format_value(lead.goal)}",

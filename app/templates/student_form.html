@@ -32,11 +32,11 @@
         </select>
       </label>
       <label>
-        Имя родителя
+        Имя родителя или контактного лица
         <input name="parent_name" value="{{ student.parent_name if student else prefill.get('parent_name', '') }}">
       </label>
       <label>
-        Контакт родителя
+        Контакт родителя или контактного лица
         <input name="parent_contact" value="{{ student.parent_contact if student else prefill.get('parent_contact', '') }}" placeholder="@telegram или телефон">
       </label>
       <label>

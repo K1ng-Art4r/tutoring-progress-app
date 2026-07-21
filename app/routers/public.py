@@ -53,6 +53,19 @@ def about_teacher(request: Request):
     )
 
 
+@router.get("/format")
+def format_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "format.html",
+        {
+            "request": request,
+            "is_admin": False,
+            "noindex": False,
+        },
+    )
+
+
 @router.get("/pricing")
 def pricing(request: Request):
     return templates.TemplateResponse(

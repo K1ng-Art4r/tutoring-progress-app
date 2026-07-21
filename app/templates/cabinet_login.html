@@ -1,31 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}Вход ученика · Вектор решений{% endblock %}
+{% block title %}Вход в личный кабинет · Вектор решений{% endblock %}
 
 {% block content %}
 <section class="section narrow">
   <div class="auth-box">
     <p class="eyebrow">Личный кабинет</p>
-    <h1>Вход для ученика</h1>
+    <h1>Вход в личный кабинет</h1>
     <p>
-      Преподаватель должен был отправить вам код доступа.
-      Введите его ниже, чтобы открыть личный кабинет с планом, отчетами и домашними заданиями.
+      Ученику нужно ввести свое имя и код, который отправил преподаватель.
+      Преподаватель входит по своему логину и паролю.
     </p>
     {% if error %}
-      <div class="notice danger">Код не найден. Проверьте его и попробуйте еще раз.</div>
+      <div class="notice danger">Логин или код не подошли. Проверьте данные и попробуйте еще раз.</div>
     {% endif %}
     <form method="post" action="/cabinet/login" class="stacked-form">
       <label>
-        Код доступа
+        Логин
         <input
-          name="code"
-          inputmode="numeric"
-          autocomplete="one-time-code"
-          maxlength="10"
-          pattern="[0-9]{10}"
-          placeholder="1234567890"
+          name="username"
+          autocomplete="username"
+          placeholder="Имя ученика"
           required
           autofocus
+        >
+      </label>
+      <label>
+        Код или пароль
+        <input
+          name="code"
+          autocomplete="current-password"
+          placeholder="1234567890"
+          required
         >
       </label>
       <button class="button primary" type="submit">Войти в кабинет</button>

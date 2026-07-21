@@ -3,119 +3,74 @@
 {% block title %}Вектор решений · индивидуальные занятия по математике{% endblock %}
 
 {% block content %}
-<section class="hero section">
-  <div class="hero-copy">
-    <p class="eyebrow">Математика · ОГЭ и ЕГЭ · личный кабинет</p>
-    <h1>Вектор решений: индивидуальная математика с понятным планом и видимым прогрессом</h1>
-    <p class="hero-text">
-      После диагностики родитель и ученик получают код для личного кабинета: цель, текущий уровень,
-      слабые места, план на 4 недели, домашние задания и короткие отчеты после уроков.
-    </p>
-    <div class="button-row">
-      <a class="button primary" href="#contact">Оставить заявку</a>
-      <a class="button secondary" href="#format">Посмотреть формат</a>
-      <a class="button secondary" href="/demo">Посмотреть демо-версию</a>
-    </div>
-  </div>
-
-  <div class="product-preview" aria-label="Пример кабинета ученика">
-    <div class="preview-header">
-      <span>Анна К. · ОГЭ</span>
-      <strong>Следующий фокус: квадратные уравнения</strong>
-    </div>
-    <div class="preview-grid">
+<section class="home-hero section">
+  <a class="hero-request-button" href="#contact">Оставить заявку</a>
+  <article class="home-demo-chart-card">
+    <div class="forecast-chart-head">
       <div>
-        <span class="metric-label">Текущий статус</span>
-        <strong>Решает с подсказкой</strong>
+        <span class="muted">Динамика прогноза</span>
+        <h2>Первичные баллы ОГЭ по времени</h2>
       </div>
+      <span class="badge ready-for-test">0-31 балл</span>
+    </div>
+    <svg class="forecast-chart home-demo-chart" viewBox="0 0 736 286" role="img" aria-label="Демо-график роста результата ученика">
+      <rect class="zone-5" x="54" y="22" width="628" height="66" rx="6"></rect>
+      <rect class="zone-4" x="54" y="88" width="628" height="56" rx="6"></rect>
+      <rect class="zone-3" x="54" y="144" width="628" height="50" rx="6"></rect>
+      <rect class="zone-2" x="54" y="194" width="628" height="44" rx="6"></rect>
+      <text class="forecast-zone-label zone-5-label" x="86" y="60">ОЦЕНКА 5</text>
+      <text class="forecast-zone-label zone-4-label" x="86" y="123">ОЦЕНКА 4</text>
+      <text class="forecast-zone-label zone-3-label" x="86" y="175">ОЦЕНКА 3</text>
+      <text class="forecast-zone-label zone-2-label" x="86" y="223">ОЦЕНКА 2</text>
+      <line class="forecast-grid-line" x1="54" x2="682" y1="22" y2="22"></line>
+      <line class="forecast-grid-line" x1="54" x2="682" y1="88" y2="88"></line>
+      <line class="forecast-grid-line" x1="54" x2="682" y1="144" y2="144"></line>
+      <line class="forecast-grid-line" x1="54" x2="682" y1="194" y2="194"></line>
+      <text class="forecast-axis-label" x="22" y="26">31</text>
+      <text class="forecast-axis-label" x="22" y="92">22</text>
+      <text class="forecast-axis-label" x="22" y="148">15</text>
+      <text class="forecast-axis-label" x="22" y="198">8</text>
+      <text class="forecast-axis-label" x="22" y="242">0</text>
+      <line class="forecast-axis" x1="54" x2="54" y1="22" y2="238"></line>
+      <line class="forecast-axis" x1="54" x2="682" y1="238" y2="238"></line>
+      <polyline class="forecast-line" points="54,164 211,149 368,134 525,119 682,106"></polyline>
+      <circle class="forecast-point" cx="54" cy="164" r="6"></circle>
+      <text class="forecast-point-label" x="54" y="150">11</text>
+      <circle class="forecast-point" cx="211" cy="149" r="6"></circle>
+      <text class="forecast-point-label" x="211" y="135">13</text>
+      <circle class="forecast-point" cx="368" cy="134" r="6"></circle>
+      <text class="forecast-point-label" x="368" y="120">15</text>
+      <circle class="forecast-point" cx="525" cy="119" r="6"></circle>
+      <text class="forecast-point-label" x="525" y="105">17</text>
+      <circle class="forecast-point" cx="682" cy="106" r="6"></circle>
+      <text class="forecast-point-label" x="682" y="92">19</text>
+      <text class="forecast-date-label" x="54" y="264">11.07</text>
+      <text class="forecast-date-label" x="211" y="264">16.07</text>
+      <text class="forecast-date-label" x="368" y="264">18.07</text>
+      <text class="forecast-date-label" x="525" y="264">20.07</text>
+      <text class="forecast-date-label" x="682" y="264">21.07</text>
+    </svg>
+  </article>
+
+  <div class="home-hero-copy">
+    <div class="home-hero-brand">
+      <img src="{{ static_asset('/static/vector-solutions-logo.png') }}" alt="">
       <div>
-        <span class="metric-label">План</span>
-        <strong>4 недели</strong>
-      </div>
-      <div>
-        <span class="metric-label">ДЗ</span>
-        <strong>8 задач</strong>
-      </div>
-    </div>
-    <div class="preview-topic">
-      <span>Квадратные уравнения</span>
-      <span class="progress-line"><i style="width: 62%"></i></span>
-    </div>
-    <div class="preview-topic">
-      <span>Проценты</span>
-      <span class="progress-line"><i style="width: 38%"></i></span>
-    </div>
-    <div class="preview-report">
-      <b>Последний урок</b>
-      <p>Разобрали алгоритм, нашли ошибки в знаках, выдали конкретное ДЗ.</p>
-    </div>
-  </div>
-</section>
-
-<section id="format" class="section band">
-  <div class="format-layout">
-    <div>
-      <div class="section-heading">
-        <p class="eyebrow">Как устроено</p>
-        <h2>Не просто «был урок», а понятная картина движения</h2>
-        <p>
-          Кабинет показывает родителю, какая цель у занятий, где ученик находится сейчас,
-          что делаем ближайшие недели и как меняется результат после уроков.
-        </p>
-      </div>
-      <div class="format-actions">
-        <a class="button primary" href="/demo">Посмотреть демо-версию</a>
+        <h1>Вектор Решений</h1>
+        <p>Личный кабинет для подготовки к ОГЭ и ЕГЭ по математике: диагностика, понятный план, домашние задания и видимый прогресс после занятий.</p>
       </div>
     </div>
 
-    <div class="format-demo-panel">
-      <span class="muted">Демо-код</span>
-      <strong>1234567890</strong>
-      <p>Демо можно открыть сразу по кнопке, а код остается для ручной проверки ученического входа.</p>
+    <div class="hero-bullets">
+      <p>Диагностика показывает стартовый уровень и превращается в понятный план подготовки.</p>
+      <p>Родитель видит отчеты, домашние задания, материалы и ближайший фокус без лишних переписок.</p>
+      <p>Ученик понимает, какие темы уже идут уверенно, а где пока нужна подсказка.</p>
+      <p>Прогресс ведется вручную после занятий, поэтому кабинет отражает реальную работу.</p>
     </div>
-  </div>
 
-  <div class="feature-grid expanded">
-    <article class="feature-card">
-      <span class="feature-icon">1</span>
-      <h3>Цель и стартовый уровень</h3>
-      <p>В кабинете зафиксировано, к чему готовимся, какие пробелы нашли и с чего начинаем работу.</p>
-    </article>
-    <article class="feature-card">
-      <span class="feature-icon">2</span>
-      <h3>Демо-диагностика</h3>
-      <p>Короткая тестовая работа показывает формат заданий, ответов, баллов и комментариев.</p>
-    </article>
-    <article class="feature-card">
-      <span class="feature-icon">3</span>
-      <h3>План на 2-4 недели</h3>
-      <p>Видно, какие темы закрываем сейчас, когда будет чекпоинт и какой следующий фокус.</p>
-    </article>
-    <article class="feature-card">
-      <span class="feature-icon">4</span>
-      <h3>Домашние задания</h3>
-      <p>Актуальные задания, сроки, выполненные работы и возможность прикрепить решение в PDF.</p>
-    </article>
-    <article class="feature-card">
-      <span class="feature-icon">5</span>
-      <h3>Отчеты после уроков</h3>
-      <p>Что прошли, что получилось, где слабое место и какой комментарий важен родителю.</p>
-    </article>
-    <article class="feature-card">
-      <span class="feature-icon">6</span>
-      <h3>Статусы тем</h3>
-      <p>Прогресс фиксируется конкретно: объяснено, с помощью, самостоятельно, готово к проверке.</p>
-    </article>
-    <article class="feature-card">
-      <span class="feature-icon">7</span>
-      <h3>Материалы</h3>
-      <p>Ссылки на конспекты, доски уроков, таблицы прогресса и планы подготовки лежат в одном месте.</p>
-    </article>
-    <article class="feature-card">
-      <span class="feature-icon">8</span>
-      <h3>Чекпоинты</h3>
-      <p>Раз в несколько недель видно, что было, что стало, что улучшилось и что делаем дальше.</p>
-    </article>
+    <div class="home-hero-action">
+      <a class="button primary" href="/demo">Посмотреть ЛК</a>
+    </div>
   </div>
 </section>
 
@@ -133,7 +88,7 @@
   <div class="section-heading">
     <p class="eyebrow">Заявка</p>
     <h2>Опишите ситуацию ученика</h2>
-    <p>Регистрация не нужна. После сообщения можно договориться о диагностике и получить код от личного кабинета.</p>
+    <p>Регистрация не нужна. Укажите имя человека, с которым мне связываться, его контакт и ситуацию ученика.</p>
   </div>
 
   {% if sent %}
@@ -142,8 +97,8 @@
 
   <form method="post" action="/request" class="request-form">
     <label>
-      Имя родителя
-      <input name="parent_name" required placeholder="Мария">
+      Имя родителя или контактного лица
+      <input name="parent_name" required placeholder="Мария, мама ученика">
     </label>
     <label>
       Класс ученика
@@ -178,7 +133,7 @@
     </label>
     <label>
       Контакт для связи
-      <input name="contact" required placeholder="Telegram, WhatsApp или телефон">
+      <input name="contact" required placeholder="@telegram, WhatsApp или телефон контактного лица">
     </label>
     <button class="button primary" type="submit">Отправить заявку</button>
   </form>

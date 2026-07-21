@@ -39,6 +39,7 @@ class Settings:
     app_name: str = "Вектор решений"
     database_url: str = _database_url()
     public_base_url: str = _public_base_url()
+    teacher_login: str = os.getenv("TEACHER_LOGIN", "K1ng_Art4r")
     teacher_password: str = os.getenv("TEACHER_PASSWORD", "change-me")
     secret_key: str = os.getenv("SECRET_KEY", "dev-secret-change-me")
     seed_demo_data: bool = _bool_env("SEED_DEMO_DATA", True)

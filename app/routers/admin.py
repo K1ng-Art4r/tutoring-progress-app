@@ -129,8 +129,8 @@ def login_page(request: Request, error: int | None = None):
 
 
 @router.post("/login")
-def login(password: Annotated[str, Form()]):
-    if password != settings.teacher_password:
+def login(username: Annotated[str, Form()], password: Annotated[str, Form()]):
+    if username.strip() != settings.teacher_login or password != settings.teacher_password:
         return RedirectResponse("/admin/login?error=1", status_code=303)
     response = RedirectResponse("/admin", status_code=303)
     attach_login_cookie(response)

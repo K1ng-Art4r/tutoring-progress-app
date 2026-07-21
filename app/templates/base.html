@@ -36,6 +36,7 @@
       </a>
       <nav class="topnav" aria-label="Основная навигация">
         <a href="/">Главная</a>
+        <a href="/format">Формат</a>
         <a href="/about">О преподавателе</a>
         <a href="/pricing">Цены</a>
         {% if is_admin %}
@@ -46,13 +47,7 @@
             <button class="link-button" type="submit">Выйти</button>
           </form>
         {% else %}
-          <div class="nav-dropdown">
-            <button class="nav-dropdown-trigger" type="button">Войти в личный кабинет</button>
-            <div class="nav-dropdown-menu">
-              <a href="/admin/login">Вход для преподавателя</a>
-              <a href="/cabinet/login">Вход для ученика</a>
-            </div>
-          </div>
+          <a class="nav-login-link" href="/cabinet/login">Вход в ЛК</a>
         {% endif %}
       </nav>
     </header>
