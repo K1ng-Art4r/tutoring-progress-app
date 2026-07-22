@@ -52,8 +52,9 @@ LEAD_STATUS_LABELS = {
     "rejected": "Отклонено",
 }
 
-DIAGNOSTIC_ATTEMPT_STATUSES = ["in_progress", "submitted", "reviewed"]
+DIAGNOSTIC_ATTEMPT_STATUSES = ["assigned", "in_progress", "submitted", "reviewed"]
 DIAGNOSTIC_ATTEMPT_STATUS_LABELS = {
+    "assigned": "Назначена",
     "in_progress": "В процессе",
     "submitted": "Нужна проверка",
     "reviewed": "Проверено",

@@ -56,3 +56,21 @@ def save_diagnostic_solution_upload(
     with storage_path.open("wb") as destination:
         shutil.copyfileobj(upload.file, destination)
     return filename, str(storage_path), upload.content_type or allowed_suffixes[suffix]
+
+
+def save_diagnostic_task_image(task_id: int, upload: UploadFile | None) -> str:
+    if upload is None or not upload.filename:
+        return ""
+
+    filename = Path(upload.filename).name
+    suffix = Path(filename).suffix.lower()
+    allowed_suffixes = {".png", ".jpg", ".jpeg", ".webp"}
+    if suffix not in allowed_suffixes:
+        raise ValueError("diagnostic_task_image_type")
+
+    task_dir = settings.upload_dir / "diagnostic_task_images" / str(task_id)
+    task_dir.mkdir(parents=True, exist_ok=True)
+    storage_path = task_dir / f"{uuid.uuid4().hex}{suffix}"
+    with storage_path.open("wb") as destination:
+        shutil.copyfileobj(upload.file, destination)
+    return f"/diagnostic-task-images/{task_id}"

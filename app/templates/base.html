@@ -36,13 +36,8 @@
       </a>
       <nav class="topnav" aria-label="Основная навигация">
         <a href="/">Главная</a>
-        <a href="/format">Моя Методика</a>
-        <a href="/about">О преподавателе</a>
-        <a href="/pricing">Цены</a>
+        <a href="/format">Методика</a>
         {% if is_admin %}
-          <a href="/admin">Админка</a>
-          <a href="/admin/homework">Все ДЗ</a>
-          <a href="/admin/diagnostics">Диагностики</a>
           <form method="post" action="/admin/logout" class="inline-form">
             <button class="link-button" type="submit">Выйти</button>
           </form>

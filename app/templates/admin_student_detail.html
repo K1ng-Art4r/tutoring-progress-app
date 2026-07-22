@@ -31,7 +31,28 @@
   </section>
 {% endif %}
 
-<section class="section access-line">
+<section class="section admin-cabinet-mode">
+  <div>
+    <span class="badge ready-for-test">Режим преподавателя</span>
+    <strong>Вы видите кабинет {{ student.name }} почти так же, как ученик</strong>
+    <p class="muted">Внутри каждого раздела доступны соответствующие инструменты редактирования.</p>
+  </div>
+  <a class="button secondary" href="{{ cabinet_url(student.access_token) }}" target="_blank" rel="noreferrer">Посмотреть глазами ученика</a>
+</section>
+
+<section class="section cabinet-workspace admin-cabinet-workspace" data-admin-cabinet>
+  <nav class="cabinet-tabs" aria-label="Разделы кабинета ученика">
+    <button class="cabinet-tab is-active" type="button" data-admin-tab="overview">Обзор</button>
+    <button class="cabinet-tab" type="button" data-admin-tab="diagnostics">Диагностические работы</button>
+    <button class="cabinet-tab" type="button" data-admin-tab="homework">Домашние задания</button>
+    <button class="cabinet-tab" type="button" data-admin-tab="materials">Материалы и заметки</button>
+    <button class="cabinet-tab" type="button" data-admin-tab="topics">Темы</button>
+    <button class="cabinet-tab" type="button" data-admin-tab="plans">Цели и планы</button>
+    <button class="cabinet-tab" type="button" data-admin-tab="reports">Отчёты</button>
+  </nav>
+</section>
+
+<section class="section access-line" data-admin-panel="overview">
   <label>
     Код для входа родителя и ученика
     <input id="cabinet-code" readonly value="{{ student.access_code }}">
@@ -39,7 +60,7 @@
   <button class="button secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('cabinet-code').value)">Скопировать код</button>
 </section>
 
-<section class="section summary-grid">
+<section class="section summary-grid" data-admin-panel="overview">
   <article class="summary-block">
     <span class="muted">Текущий статус</span>
     <p>{{ student.current_status or "Пока не заполнено" }}</p>
@@ -54,10 +75,38 @@
   </article>
 </section>
 
-<section class="section">
-  <div class="section-heading compact">
-    <h2>Диагностики ученика</h2>
+<section class="section" data-admin-panel="diagnostics" hidden>
+  <div class="student-diagnostics-heading">
+    <div class="section-heading compact">
+      <h2>Диагностики ученика</h2>
+      <p>Назначьте работу — она сразу появится в личном кабинете этого ученика.</p>
+    </div>
+    <div class="diagnostic-assignment-actions">
+      <a class="button secondary" href="/admin/diagnostics/new">Создать новую диагностику</a>
+    {% if available_diagnostic_works %}
+      <form method="post" action="/admin/students/{{ student.id }}/diagnostics/assign" class="diagnostic-assign-form">
+        <label>
+          Новая диагностика
+          <select name="work_id" required>
+            <option value="">Выберите работу</option>
+            {% for work in available_diagnostic_works %}
+              <option value="{{ work.id }}">{{ work.exam_type }} · {{ work.title }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button class="button primary" type="submit">Назначить ученику</button>
+      </form>
+    {% else %}
+      <p class="muted">Для направления «{{ student.subject }}» нет доступных работ для назначения.</p>
+    {% endif %}
+    </div>
   </div>
+  {% if diagnostic_assigned %}
+    <div class="notice success">Диагностика назначена и появилась в личном кабинете ученика.</div>
+  {% endif %}
+  {% if error == "diagnostic_unavailable" %}
+    <div class="notice danger">Не удалось назначить диагностику: работа недоступна или уже назначена.</div>
+  {% endif %}
   <div class="diagnostic-admin-grid compact-grid">
     {% for attempt in student.diagnostic_attempts %}
       <article class="diagnostic-admin-card">
@@ -75,7 +124,9 @@
             <span>Проверка: <b>{{ attempt.manual_score }}/{{ attempt.work.max_score }}</b></span>
           {% endif %}
         </div>
-        <a class="button small secondary" href="/admin/diagnostics/{{ attempt.id }}">Открыть</a>
+        <a class="button small secondary" href="/admin/diagnostics/{{ attempt.id }}">
+          {% if attempt.status == "reviewed" %}Редактировать проверку{% elif attempt.status == "submitted" %}Проверить{% else %}Открыть{% endif %}
+        </a>
       </article>
     {% else %}
       <p class="muted">Ученик еще не проходил диагностику.</p>
@@ -83,8 +134,8 @@
   </div>
 </section>
 
-<section class="section admin-columns topic-homework-grid">
-  <div class="admin-panel">
+<section class="admin-cabinet-split">
+  <div class="section admin-panel" data-admin-panel="topics" hidden>
     <div class="section-heading compact">
       <h2>Компетенции и прогноз</h2>
       {% if forecast.is_available %}
@@ -149,7 +200,7 @@
     </form>
   </div>
 
-  <div class="admin-panel">
+  <div class="section admin-panel" data-admin-panel="homework" hidden>
     <div class="section-heading compact">
       <h2>Текущее домашнее задание</h2>
     </div>
@@ -239,7 +290,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section" data-admin-panel="reports" hidden>
   <div class="section-heading compact">
     <h2>Новый отчет после урока</h2>
     <p>Все поля обязательны, кроме ссылки на материалы. После сохранения ДЗ также появится в блоке текущего домашнего задания.</p>
@@ -291,8 +342,8 @@
   </form>
 </section>
 
-<section class="section admin-columns">
-  <div class="admin-panel">
+<section class="admin-cabinet-split">
+  <div class="section admin-panel" data-admin-panel="materials" hidden>
     <div class="section-heading compact">
       <h2>Материалы</h2>
     </div>
@@ -325,7 +376,7 @@
     </form>
   </div>
 
-  <div class="admin-panel">
+  <div class="section admin-panel" data-admin-panel="plans" hidden>
     <div class="section-heading compact">
       <h2>Месячный чекпоинт</h2>
     </div>
@@ -341,7 +392,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section" data-admin-panel="reports" hidden>
   <div class="section-heading compact">
     <h2>История отчетов</h2>
   </div>
@@ -374,7 +425,7 @@
   </div>
 </section>
 
-<section class="section">
+<section class="section" data-admin-panel="plans" hidden>
   <div class="section-heading compact">
     <h2>История чекпоинтов</h2>
   </div>
@@ -393,4 +444,26 @@
     {% endfor %}
   </div>
 </section>
+
+<script>
+  (() => {
+    const workspace = document.querySelector("[data-admin-cabinet]");
+    if (!workspace) return;
+    const tabs = [...workspace.querySelectorAll("[data-admin-tab]")];
+    const panels = [...document.querySelectorAll("[data-admin-panel]")];
+    const allowed = new Set(tabs.map((tab) => tab.dataset.adminTab));
+
+    const activate = (name, updateHash = true) => {
+      const target = allowed.has(name) ? name : "overview";
+      tabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.adminTab === target));
+      panels.forEach((panel) => {
+        panel.hidden = panel.dataset.adminPanel !== target;
+      });
+      if (updateHash) history.replaceState(null, "", `#${target}`);
+    };
+
+    tabs.forEach((tab) => tab.addEventListener("click", () => activate(tab.dataset.adminTab)));
+    activate(location.hash.slice(1), false);
+  })();
+</script>
 {% endblock %}

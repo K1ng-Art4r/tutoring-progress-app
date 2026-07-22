@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Новая диагностика · Админка{% endblock %}
+
+{% block content %}
+<section class="section admin-header diagnostic-builder-header">
+  <div>
+    <p class="eyebrow">Конструктор</p>
+    <h1>Новая диагностическая работа</h1>
+    <p>Создайте работу целиком. После сохранения её можно будет назначить подходящему ученику.</p>
+  </div>
+  <a class="button secondary" href="/admin">К ученикам</a>
+</section>
+
+{% if created_work %}
+  <section class="section">
+    <div class="notice success">
+      Диагностика «{{ created_work.title }}» создана: {{ created_work.tasks|length }} заданий,
+      {{ created_work.max_score }} баллов. Теперь её можно назначить в карточке ученика направления «{{ created_work.subject }}».
+    </div>
+  </section>
+{% endif %}
+{% if error %}
+  <section class="section">
+    <div class="notice danger">
+      {% if error == "invalid_tasks" %}Заполните условие, правильный ответ и баллы каждой задачи.
+      {% elif error == "image_type" %}Изображение не загружено: используйте PNG, JPG или WEBP.
+      {% elif error == "image_size" %}Изображение не загружено: максимальный размер файла — 8 МБ.
+      {% else %}Заполните название, направление, тип экзамена, описание и время работы.{% endif %}
+    </div>
+  </section>
+{% endif %}
+
+<form method="post" action="/admin/diagnostics/new" class="section diagnostic-builder-form" enctype="multipart/form-data">
+  <section class="builder-work-card">
+    <div class="section-heading compact">
+      <p class="eyebrow">О работе</p>
+      <h2>Основные параметры</h2>
+    </div>
+    <div class="form-grid">
+      <label>
+        Название диагностики
+        <input name="title" required placeholder="Например: Контрольный срез по алгебре">
+      </label>
+      <label>
+        Направление ученика
+        <select name="subject" required>
+          <option value="">Выберите направление</option>
+          {% for subject in subject_options %}<option value="{{ subject }}">{{ subject }}</option>{% endfor %}
+        </select>
+      </label>
+      <label>
+        Тип работы
+        <input name="exam_type" required placeholder="Например: ОГЭ · мини-срез">
+      </label>
+      <label>
+        Время, минут
+        <input name="duration_minutes" type="number" min="5" max="300" value="40" required>
+      </label>
+    </div>
+    <label>
+      Описание для ученика
+      <textarea name="description" required rows="3" placeholder="Что проверяет работа и как будет использован результат"></textarea>
+    </label>
+  </section>
+
+  <div class="builder-task-toolbar">
+    <div>
+      <p class="eyebrow">Задания</p>
+      <h2>Состав работы</h2>
+    </div>
+    <button class="button secondary" id="add-diagnostic-task" type="button">+ Добавить задачу</button>
+  </div>
+
+  <input id="task-count" type="hidden" name="task_count" value="1">
+  <div id="diagnostic-task-builder" class="diagnostic-task-builder">
+    <article class="builder-task-card" data-builder-task>
+      <div class="builder-task-head">
+        <div><span class="muted">Задание</span><h3 data-task-number>Задача 1</h3></div>
+        <button class="button small danger" type="button" data-remove-task>Убрать</button>
+      </div>
+      <div class="form-grid">
+        <label>Короткое название<input name="task_title_0" placeholder="Например: Линейное уравнение"></label>
+        <label>Проверяемый навык<input name="task_skill_0" placeholder="Например: решает уравнения с дробями"></label>
+      </div>
+      <label>Текст задачи<textarea name="task_prompt_0" required rows="4" placeholder="Полное условие задачи"></textarea></label>
+      <div class="form-grid">
+        <label>Правильный ответ<input name="task_correct_answer_0" required placeholder="Варианты можно разделить символом |"></label>
+        <label>Максимальный балл<input name="task_max_score_0" type="number" min="1" max="20" value="1" required></label>
+      </div>
+      <label>Разбор / эталонное решение<textarea name="task_solution_0" rows="3" placeholder="Решение, которое увидит ученик после проверки"></textarea></label>
+      <label>Критерии ручной проверки<textarea name="task_criteria_0" rows="3" placeholder="Например: 2 балла — полный ход, 1 балл — верная идея"></textarea></label>
+      <div class="builder-task-options">
+        <label>Изображение к условию<input name="task_image_0" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"></label>
+        <label class="checkbox-label builder-solution-toggle">
+          <input name="task_requires_solution_0" type="checkbox" value="1">
+          Ученик должен прикрепить файл с развёрнутым решением
+        </label>
+      </div>
+    </article>
+  </div>
+
+  <button class="button primary builder-submit" type="submit">Создать диагностическую работу</button>
+</form>
+
+<template id="diagnostic-task-template">
+  <article class="builder-task-card" data-builder-task>
+    <div class="builder-task-head">
+      <div><span class="muted">Задание</span><h3 data-task-number>Задача</h3></div>
+      <button class="button small danger" type="button" data-remove-task>Убрать</button>
+    </div>
+    <div class="form-grid">
+      <label>Короткое название<input name="task_title___INDEX__" placeholder="Например: Геометрическая задача"></label>
+      <label>Проверяемый навык<input name="task_skill___INDEX__" placeholder="Что именно проверяет задача"></label>
+    </div>
+    <label>Текст задачи<textarea name="task_prompt___INDEX__" required rows="4" placeholder="Полное условие задачи"></textarea></label>
+    <div class="form-grid">
+      <label>Правильный ответ<input name="task_correct_answer___INDEX__" required placeholder="Варианты можно разделить символом |"></label>
+      <label>Максимальный балл<input name="task_max_score___INDEX__" type="number" min="1" max="20" value="1" required></label>
+    </div>
+    <label>Разбор / эталонное решение<textarea name="task_solution___INDEX__" rows="3" placeholder="Решение после проверки"></textarea></label>
+    <label>Критерии ручной проверки<textarea name="task_criteria___INDEX__" rows="3" placeholder="Критерии частичного балла"></textarea></label>
+    <div class="builder-task-options">
+      <label>Изображение к условию<input name="task_image___INDEX__" type="file" accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"></label>
+      <label class="checkbox-label builder-solution-toggle"><input name="task_requires_solution___INDEX__" type="checkbox" value="1">Ученик должен прикрепить файл с развёрнутым решением</label>
+    </div>
+  </article>
+</template>
+
+<script>
+  const taskBuilder = document.getElementById("diagnostic-task-builder");
+  const taskTemplate = document.getElementById("diagnostic-task-template");
+  const taskCount = document.getElementById("task-count");
+  const addTaskButton = document.getElementById("add-diagnostic-task");
+
+  function reindexTasks() {
+    const cards = Array.from(taskBuilder.querySelectorAll("[data-builder-task]"));
+    cards.forEach((card, index) => {
+      card.querySelector("[data-task-number]").textContent = `Задача ${index + 1}`;
+      card.querySelectorAll("[name]").forEach((field) => {
+        field.name = field.name.replace(/_\d+$/, `_${index}`);
+      });
+      card.querySelector("[data-remove-task]").hidden = cards.length === 1;
+    });
+    taskCount.value = String(cards.length);
+  }
+
+  addTaskButton.addEventListener("click", () => {
+    const index = taskBuilder.querySelectorAll("[data-builder-task]").length;
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = taskTemplate.innerHTML.replaceAll("__INDEX__", String(index));
+    taskBuilder.appendChild(wrapper.firstElementChild);
+    reindexTasks();
+  });
+
+  taskBuilder.addEventListener("click", (event) => {
+    const removeButton = event.target.closest("[data-remove-task]");
+    if (!removeButton) return;
+    removeButton.closest("[data-builder-task]").remove();
+    reindexTasks();
+  });
+
+  reindexTasks();
+</script>
+{% endblock %}

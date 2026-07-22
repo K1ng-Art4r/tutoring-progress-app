@@ -108,7 +108,7 @@
   <div class="cabinet-tab-panel" data-cabinet-panel="diagnostics">
     <div class="section-heading compact">
       <h2>Диагностические работы</h2>
-      <p>Стартовая диагностика, мини-срезы и контрольные показывают не только баллы, но и влияние на общий прогноз.</p>
+      <p>Здесь собраны назначенные работы и их текущие результаты. Подробности доступны внутри каждой диагностики.</p>
     </div>
     <div class="diagnostic-card-grid">
       {% for work in diagnostic_works %}
@@ -126,12 +126,14 @@
                 <strong>{{ attempt.manual_score }}/{{ work.max_score }} баллов</strong>
               {% elif attempt.status == "submitted" %}
                 <span class="muted">Ожидает проверки преподавателем</span>
+              {% elif attempt.status == "assigned" %}
+                <span class="muted">Назначена преподавателем и готова к прохождению</span>
               {% else %}
                 <span class="muted">Можно продолжить до окончания таймера</span>
               {% endif %}
             {% endif %}
             <a class="button primary" href="/cabinet/{{ student.access_token }}/diagnostics/{{ work.slug }}">
-              {% if attempt and attempt.status != "in_progress" %}Открыть{% elif attempt %}Продолжить{% else %}Начать диагностику{% endif %}
+              {% if attempt and attempt.status == "assigned" %}Открыть диагностику{% elif attempt and attempt.status != "in_progress" %}Открыть{% elif attempt %}Продолжить{% else %}Начать диагностику{% endif %}
             </a>
           </div>
         </article>
@@ -142,17 +144,6 @@
         </div>
       {% endfor %}
     </div>
-    {% if forecast.diagnostic_summaries %}
-      <div class="forecast-impact-list">
-        {% for item in forecast.diagnostic_summaries %}
-          <article>
-            <span class="muted">{{ (item.attempt.reviewed_at if item.attempt.reviewed_at else item.attempt.created_at)|date }}</span>
-            <h3>{{ item.attempt.work.title }}</h3>
-            <p><b>Результат:</b> {{ item.score }}/{{ item.attempt.work.max_score }}. {{ item.influence }}</p>
-          </article>
-        {% endfor %}
-      </div>
-    {% endif %}
   </div>
 
   <div class="cabinet-tab-panel" data-cabinet-panel="homework">

@@ -51,8 +51,21 @@
 
 <form method="post" action="/admin/diagnostics/{{ attempt.id }}/review" class="section diagnostic-review-form">
   <div class="section-heading compact">
-    <h2>Ответы и ручная проверка</h2>
-    <p>Автосверка ставит полный балл за точное совпадение ответа. Для 7-12 заданий можно поставить частичный балл по критериям.</p>
+    <h2>{% if attempt.status == "reviewed" %}Редактирование проверки{% else %}Ответы и ручная проверка{% endif %}</h2>
+    <p>Можно изменить баллы по каждому заданию, итоговый вывод и готовое сообщение родителю.</p>
+  </div>
+
+  <div class="diagnostic-conclusion-editor">
+    <label>
+      Вывод по диагностике
+      <textarea name="conclusion" rows="5" placeholder="Если оставить пустым, вывод сформируется автоматически по итоговому баллу.">{{ attempt.conclusion or '' }}</textarea>
+      <small class="muted">Этот текст увидит ученик в результате диагностики.</small>
+    </label>
+    <label>
+      Что сказать родителю
+      <textarea name="parent_message" rows="8" placeholder="Если оставить пустым, сообщение сформируется автоматически.">{{ attempt.parent_message or '' }}</textarea>
+      <small class="muted">Можно полностью переписать автоматическое сообщение перед отправкой.</small>
+    </label>
   </div>
 
   <div class="review-task-list">
@@ -129,6 +142,8 @@
     {% endfor %}
   </div>
 
-  <button class="button primary" type="submit">Сохранить проверку и сформировать вывод</button>
+  <button class="button primary" type="submit">
+    {% if attempt.status == "reviewed" %}Сохранить изменения проверки{% else %}Сохранить проверку и сформировать вывод{% endif %}
+  </button>
 </form>
 {% endblock %}

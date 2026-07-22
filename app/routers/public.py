@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import FileResponse, PlainTextResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.auth import attach_student_login_cookie, clear_student_login_cookie, student_access_token_from_cookie
 from app.database import get_db
 from app.demo import DEMO_ACCESS_TOKEN
-from app.models import Lead
+from app.config import settings
+from app.models import DiagnosticTask, Lead
 from app.notifications import notify_new_lead
 from app.options import CLASS_OPTIONS, GOAL_OPTIONS, SUBJECT_OPTIONS
 from app.seed import seed_demo_data
@@ -122,3 +123,15 @@ def create_request(
 @router.get("/robots.txt", response_class=PlainTextResponse)
 def robots_txt():
     return "User-agent: *\nDisallow: /admin\nDisallow: /cabinet\n"
+
+
+@router.get("/diagnostic-task-images/{task_id}", include_in_schema=False)
+def diagnostic_task_image(task_id: int, db: Session = Depends(get_db)):
+    task = db.get(DiagnosticTask, task_id)
+    task_dir = settings.upload_dir / "diagnostic_task_images" / str(task_id)
+    if task is None or task.image_path != f"/diagnostic-task-images/{task_id}" or not task_dir.is_dir():
+        raise HTTPException(status_code=404)
+    image_file = next((path for path in task_dir.iterdir() if path.is_file()), None)
+    if image_file is None:
+        raise HTTPException(status_code=404)
+    return FileResponse(image_file)

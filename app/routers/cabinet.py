@@ -87,6 +87,7 @@ def _active_work_for_student(student: Student, work_slug: str, db: Session) -> D
             DiagnosticWork.slug == work_slug,
             DiagnosticWork.subject == student.subject,
             DiagnosticWork.is_active.is_(True),
+            DiagnosticWork.attempts.any(DiagnosticAttempt.student_id == student.id),
         )
         .options(selectinload(DiagnosticWork.tasks))
     )
@@ -228,9 +229,15 @@ def student_cabinet(
     diagnostic_works = list(
         db.scalars(
             select(DiagnosticWork)
-            .where(DiagnosticWork.subject == student.subject, DiagnosticWork.is_active.is_(True))
+            .join(DiagnosticAttempt)
+            .where(
+                DiagnosticWork.subject == student.subject,
+                DiagnosticWork.is_active.is_(True),
+                DiagnosticAttempt.student_id == student.id,
+            )
             .options(selectinload(DiagnosticWork.tasks))
             .order_by(DiagnosticWork.created_at.asc())
+            .distinct()
         )
     )
     diagnostic_attempts = list(
@@ -349,7 +356,7 @@ def diagnostic_work_page(
         raise HTTPException(status_code=404)
 
     attempt = _latest_attempt(student.id, work.id, db)
-    if attempt is None:
+    if attempt is None or attempt.status == "assigned":
         response = templates.TemplateResponse(
             request,
             "diagnostic_intro.html",
@@ -431,6 +438,16 @@ def start_diagnostic_work(
 
     attempt = _latest_attempt(student.id, work.id, db)
     if attempt is not None:
+        if attempt.status == "assigned":
+            now = datetime.utcnow()
+            attempt.status = "in_progress"
+            attempt.started_at = now
+            attempt.expires_at = now + timedelta(minutes=work.duration_minutes)
+            db.commit()
+            return RedirectResponse(
+                f"/cabinet/{access_token}/diagnostics/{work.slug}",
+                status_code=303,
+            )
         if _finish_expired_attempt(attempt):
             db.commit()
         return RedirectResponse(

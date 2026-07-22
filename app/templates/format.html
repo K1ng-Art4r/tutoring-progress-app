@@ -1,24 +1,64 @@
 {% extends "base.html" %}
 
-{% block title %}Моя методика и личный кабинет · Вектор решений{% endblock %}
+{% block title %}Методика и личный кабинет · Вектор решений{% endblock %}
 
 {% block content %}
+<a class="floating-request-cta" href="/#contact" aria-label="Оставить заявку">
+  <span class="floating-request-icon" aria-hidden="true">
+    <svg viewBox="0 0 32 32"><path d="M7 4.5h14a3 3 0 0 1 3 3v17a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-17a3 3 0 0 1 3-3Z"></path><path d="M9 2v5M15 2v5M21 2v5M9 13h7M9 18h5M19 22l7-7 2 2-7 7-3 1Z"></path></svg>
+  </span>
+  <span>Оставить заявку</span>
+</a>
 <section class="section format-hero">
   <div>
-    <p class="eyebrow">Моя методика</p>
+    <p class="eyebrow">Методика</p>
     <h1>Не просто «был урок», а понятная картина движения</h1>
     <p class="hero-text">
       Личный кабинет показывает, какая цель у занятий, где ученик находится сейчас,
       что делаем ближайшие недели и как меняется результат после диагностики, уроков и домашних заданий.
     </p>
     <div class="button-row">
-      <a class="button primary" href="/demo">Посмотреть ЛК</a>
-      <a class="button secondary" href="/#contact">Оставить заявку</a>
+      <a class="button primary" href="/demo">Посмотреть демо-версию ЛК</a>
     </div>
   </div>
-  <figure class="format-hero-image">
-    <img src="{{ static_asset('/static/vector-solutions-logo.png') }}" alt="Логотип Вектор решений">
+  <div class="math-hero-visual" aria-label="Математическая инфографика: от понимания темы к уверенному решению">
+    <span class="math-orbit orbit-one"></span>
+    <span class="math-orbit orbit-two"></span>
+    <span class="math-symbol symbol-x">x²</span>
+    <span class="math-symbol symbol-pi">π</span>
+    <span class="math-symbol symbol-root">√</span>
+    <div class="math-core">
+      <span>понимаю</span>
+      <strong>→</strong>
+      <span>решаю</span>
+    </div>
+    <svg class="math-curve" viewBox="0 0 420 250" aria-hidden="true">
+      <line x1="34" y1="218" x2="390" y2="218"></line>
+      <line x1="52" y1="232" x2="52" y2="24"></line>
+      <path d="M54 210 C110 205 125 184 162 158 S235 132 271 86 S331 53 382 34"></path>
+      <circle cx="162" cy="158" r="6"></circle><circle cx="271" cy="86" r="6"></circle><circle cx="382" cy="34" r="7"></circle>
+    </svg>
+    <span class="math-caption">связь · логика · результат</span>
+  </div>
+</section>
+
+<section class="section teaching-approach">
+  <figure class="approach-photo">
+    <img src="/static/%D1%84%D0%BE%D1%82%D0%BE%20%D1%83%20%D0%B4%D0%BE%D1%81%D0%BA%D0%B8.jpeg" alt="Евгений Давыдов объясняет материал у доски">
   </figure>
+  <div class="teaching-approach-copy">
+    <p class="eyebrow">Мой подход</p>
+    <h2>Не натаскивать на шаблон, а выстроить фундамент понимания</h2>
+    <p class="approach-lead">
+      Мне важно рассказать тему так, чтобы у ученика сложилась цельная картина: откуда берётся правило,
+      почему работает каждый шаг и как проверить себя. Тогда математика перестаёт быть набором формул,
+      которые нужно успеть запомнить до экзамена.
+    </p>
+  </div>
+  <div class="approach-note">
+    <strong>Если объяснение не сработало, я не повторяю его теми же словами.</strong>
+    <p>Мы ищем другой пример, рисунок или связь с уже понятной темой — до момента, когда ученик может сам объяснить ход решения. Это и есть фундамент, на который затем можно уверенно ставить более сложные задачи.</p>
+  </div>
 </section>
 
 <section class="section">

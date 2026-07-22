@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import secrets
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Annotated
@@ -13,7 +14,7 @@ from app.auth import admin_redirect, attach_login_cookie, clear_login_cookie, is
 from app.config import settings
 from app.database import get_db
 from app.diagnostic_logic import answer_score, build_parent_message, get_scale_band
-from app.file_uploads import save_pdf_upload
+from app.file_uploads import save_diagnostic_task_image, save_pdf_upload
 from app.models import (
     STUDENT_STATUSES,
     Checkpoint,
@@ -293,6 +294,7 @@ def diagnostics_overview(
             )
         )
     )
+
     diagnostic_counts = {
         "all": len(all_attempts),
         "needs_review": sum(1 for attempt in all_attempts if attempt.status == "submitted"),
@@ -321,6 +323,122 @@ def diagnostics_overview(
             "noindex": True,
         },
     )
+
+
+@router.get("/diagnostics/new")
+def new_diagnostic_work_page(
+    request: Request,
+    created: int | None = None,
+    error: str | None = None,
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+    created_work = db.get(DiagnosticWork, created) if created is not None else None
+    return templates.TemplateResponse(
+        request,
+        "admin_diagnostic_builder.html",
+        {
+            "request": request,
+            "subject_options": SUBJECT_OPTIONS,
+            "created_work": created_work,
+            "error": error,
+            "is_admin": True,
+            "noindex": True,
+        },
+    )
+
+
+@router.post("/diagnostics/new")
+async def create_diagnostic_work(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+
+    form = await request.form()
+    title = str(form.get("title", "")).strip()
+    subject = str(form.get("subject", "")).strip()
+    exam_type = str(form.get("exam_type", "")).strip()
+    description = str(form.get("description", "")).strip()
+    try:
+        duration_minutes = min(max(int(str(form.get("duration_minutes", "40"))), 5), 300)
+        task_count = min(max(int(str(form.get("task_count", "1"))), 1), 30)
+    except ValueError:
+        return RedirectResponse("/admin/diagnostics/new?error=invalid_fields", status_code=303)
+
+    if not title or subject not in SUBJECT_OPTIONS or not exam_type or not description:
+        return RedirectResponse("/admin/diagnostics/new?error=invalid_fields", status_code=303)
+
+    task_rows: list[dict] = []
+    for index in range(task_count):
+        prompt = str(form.get(f"task_prompt_{index}", "")).strip()
+        correct_answer = str(form.get(f"task_correct_answer_{index}", "")).strip()
+        if not prompt or not correct_answer:
+            return RedirectResponse("/admin/diagnostics/new?error=invalid_tasks", status_code=303)
+        try:
+            task_max_score = min(max(int(str(form.get(f"task_max_score_{index}", "1"))), 1), 20)
+        except ValueError:
+            return RedirectResponse("/admin/diagnostics/new?error=invalid_tasks", status_code=303)
+
+        image_upload = form.get(f"task_image_{index}")
+        image_filename = str(getattr(image_upload, "filename", "") or "")
+        if image_filename:
+            if Path(image_filename).suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
+                return RedirectResponse("/admin/diagnostics/new?error=image_type", status_code=303)
+            image_size = getattr(image_upload, "size", None)
+            if image_size is not None and image_size > 8 * 1024 * 1024:
+                return RedirectResponse("/admin/diagnostics/new?error=image_size", status_code=303)
+
+        task_rows.append(
+            {
+                "title": str(form.get(f"task_title_{index}", "")).strip() or f"Задание {index + 1}",
+                "skill": str(form.get(f"task_skill_{index}", "")).strip(),
+                "prompt": prompt,
+                "correct_answer": correct_answer,
+                "solution": str(form.get(f"task_solution_{index}", "")).strip(),
+                "criteria": str(form.get(f"task_criteria_{index}", "")).strip(),
+                "max_score": task_max_score,
+                "requires_solution": str(form.get(f"task_requires_solution_{index}", "")) == "1",
+                "image_upload": image_upload if image_filename else None,
+            }
+        )
+
+    work = DiagnosticWork(
+        slug=f"custom-{secrets.token_hex(8)}",
+        title=title,
+        subject=subject,
+        exam_type=exam_type,
+        description=description,
+        duration_minutes=duration_minutes,
+        max_score=sum(row["max_score"] for row in task_rows),
+        is_active=True,
+    )
+    db.add(work)
+    db.flush()
+    for position, row in enumerate(task_rows, start=1):
+        task = DiagnosticTask(
+            work_id=work.id,
+            position=position,
+            title=row["title"],
+            skill=row["skill"],
+            prompt=row["prompt"],
+            correct_answer=row["correct_answer"],
+            solution=row["solution"],
+            max_score=row["max_score"],
+            requires_solution=row["requires_solution"],
+            criteria=row["criteria"],
+            image_path="",
+        )
+        db.add(task)
+        db.flush()
+        if row["image_upload"] is not None:
+            task.image_path = save_diagnostic_task_image(task.id, row["image_upload"])
+    db.commit()
+    return RedirectResponse(f"/admin/diagnostics/new?created={work.id}", status_code=303)
 
 
 @router.get("/diagnostic-solutions/{answer_id}")
@@ -417,19 +535,23 @@ async def review_diagnostic_attempt(
         total_score += teacher_score
 
     band = get_scale_band(total_score, attempt.work.exam_type)
-    attempt.status = "reviewed"
-    attempt.reviewed_at = datetime.utcnow()
-    attempt.manual_score = total_score
-    attempt.conclusion = (
+    generated_conclusion = (
         f"{band['level']}. {band['conclusion']} "
         f"Первый фокус: {band['focus']} Ориентир: {band['target']}"
     )
-    attempt.parent_message = build_parent_message(
+    generated_parent_message = build_parent_message(
         attempt.work,
         list(attempt.work.tasks),
         answers_by_task,
         total_score,
     )
+    custom_conclusion = str(form.get("conclusion", "")).strip()
+    custom_parent_message = str(form.get("parent_message", "")).strip()
+    attempt.status = "reviewed"
+    attempt.reviewed_at = datetime.utcnow()
+    attempt.manual_score = total_score
+    attempt.conclusion = custom_conclusion or generated_conclusion
+    attempt.parent_message = custom_parent_message or generated_parent_message
     calibrate_oge_competencies_from_attempt(db, attempt)
     db.commit()
     return RedirectResponse(f"/admin/diagnostics/{attempt.id}?reviewed=1", status_code=303)
@@ -582,6 +704,7 @@ def student_detail(
     student_id: int,
     request: Request,
     created: int | None = None,
+    diagnostic_assigned: int | None = None,
     error: str | None = None,
     db: Session = Depends(get_db),
 ):
@@ -608,6 +731,22 @@ def student_detail(
         student = db.scalar(student_query)
     diagnostic_attempts = list(student.diagnostic_attempts)
     forecast = build_student_forecast(student, diagnostic_attempts)
+    unavailable_work_ids = {
+        attempt.work_id
+        for attempt in diagnostic_attempts
+        if attempt.status in {"assigned", "in_progress", "submitted"}
+    }
+    available_diagnostic_works = list(
+        db.scalars(
+            select(DiagnosticWork)
+            .where(
+                DiagnosticWork.subject == student.subject,
+                DiagnosticWork.is_active.is_(True),
+                DiagnosticWork.id.not_in(unavailable_work_ids),
+            )
+            .order_by(DiagnosticWork.exam_type.asc(), DiagnosticWork.title.asc())
+        )
+    )
 
     return templates.TemplateResponse(
         request,
@@ -618,8 +757,10 @@ def student_detail(
             "topic_statuses": TOPIC_STATUSES,
             "topic_status_levels": TOPIC_STATUS_LEVELS,
             "forecast": forecast,
+            "available_diagnostic_works": available_diagnostic_works,
             "student_statuses": STUDENT_STATUSES,
             "created": created == 1,
+            "diagnostic_assigned": diagnostic_assigned == 1,
             "error": error,
             "today": date.today(),
             "material_kind_options": MATERIAL_KIND_OPTIONS,
@@ -627,6 +768,62 @@ def student_detail(
             "is_admin": True,
             "noindex": True,
         },
+    )
+
+
+@router.post("/students/{student_id}/diagnostics/assign")
+def assign_diagnostic_to_student(
+    student_id: int,
+    request: Request,
+    work_id: Annotated[int, Form()],
+    db: Session = Depends(get_db),
+):
+    redirect = _require_admin(request)
+    if redirect:
+        return redirect
+
+    student = db.get(Student, student_id)
+    work = db.scalar(
+        select(DiagnosticWork).where(
+            DiagnosticWork.id == work_id,
+            DiagnosticWork.is_active.is_(True),
+        )
+    )
+    if student is None:
+        return RedirectResponse("/admin", status_code=303)
+    if work is None or work.subject != student.subject:
+        return RedirectResponse(
+            f"/admin/students/{student.id}?error=diagnostic_unavailable",
+            status_code=303,
+        )
+
+    existing = db.scalar(
+        select(DiagnosticAttempt.id).where(
+            DiagnosticAttempt.student_id == student.id,
+            DiagnosticAttempt.work_id == work.id,
+            DiagnosticAttempt.status.in_(["assigned", "in_progress", "submitted"]),
+        ).limit(1)
+    )
+    if existing is not None:
+        return RedirectResponse(
+            f"/admin/students/{student.id}?error=diagnostic_unavailable",
+            status_code=303,
+        )
+
+    now = datetime.utcnow()
+    db.add(
+        DiagnosticAttempt(
+            student_id=student.id,
+            work_id=work.id,
+            status="assigned",
+            started_at=now,
+            expires_at=now + timedelta(minutes=work.duration_minutes),
+        )
+    )
+    db.commit()
+    return RedirectResponse(
+        f"/admin/students/{student.id}?diagnostic_assigned=1",
+        status_code=303,
     )
 
 
