@@ -57,26 +57,35 @@
           <span class="muted">Если экзамен был бы сегодня</span>
           <strong>{{ forecast.forecast_label }}</strong>
           <p>{{ forecast.grade_zone }}</p>
+          {% if forecast.primary_score_label %}<p class="muted">{{ forecast.primary_score_label }}</p>{% endif %}
         </article>
-        <article class="geometry-card {% if forecast.geometry_ok %}is-ok{% else %}is-risk{% endif %}">
-          <span class="muted">Отдельный порог ОГЭ</span>
-          <strong>Геометрия: {{ forecast.geometry_points }} из {{ forecast.geometry_total }}</strong>
-          <p>{% if forecast.geometry_ok %}Минимальный порог сейчас закрывается.{% else %}Сначала добираем минимум 2 балла по геометрии.{% endif %}</p>
-        </article>
+        {% if forecast.has_geometry_threshold %}
+          <article class="geometry-card {% if forecast.geometry_ok %}is-ok{% else %}is-risk{% endif %}">
+            <span class="muted">Отдельный порог ОГЭ</span>
+            <strong>Геометрия: {{ forecast.geometry_points }} из {{ forecast.geometry_total }}</strong>
+            <p>{% if forecast.geometry_ok %}Минимальный порог сейчас закрывается.{% else %}Сначала добираем минимум 2 балла по геометрии.{% endif %}</p>
+          </article>
+        {% else %}
+          <article class="geometry-card is-ok">
+            <span class="muted">Уверенность прогноза</span>
+            <strong>{{ forecast.confidence|capitalize }}</strong>
+            <p>{% if forecast.confidence_incomplete %}Для большей точности нужен полный пробный вариант.{% else %}Все основные компетенции обеспечены данными.{% endif %}</p>
+          </article>
+        {% endif %}
       </div>
 
       <article class="forecast-chart-card">
         <div class="forecast-chart-head">
           <div>
             <span class="muted">Динамика прогноза</span>
-            <h2>Первичные баллы ОГЭ по времени</h2>
+            <h2>{{ forecast.chart_title }}</h2>
           </div>
-          <span class="badge ready-for-test">0-31 балл</span>
+          <span class="badge ready-for-test">{{ forecast.score_range_label }}</span>
         </div>
         <svg class="forecast-chart" viewBox="0 0 {{ forecast.chart.width }} {{ forecast.chart.height }}" role="img" aria-label="График прогноза ученика">
           {% for zone in forecast.chart.zones %}
             <rect class="{{ zone.class }}" x="{{ zone.x }}" y="{{ zone.y }}" width="{{ zone.width }}" height="{{ zone.height }}" rx="6"></rect>
-            <text class="forecast-zone-label {{ zone.class }}-label" x="86" y="{{ zone.label_y }}">ОЦЕНКА {{ zone.grade }}</text>
+            <text class="forecast-zone-label {{ zone.class }}-label" x="86" y="{{ zone.label_y }}">{{ zone.label }}</text>
           {% endfor %}
           {% for tick in forecast.chart.ticks %}
             <line class="forecast-grid-line" x1="54" x2="682" y1="{{ tick.y }}" y2="{{ tick.y }}"></line>
@@ -86,7 +95,14 @@
           <line class="forecast-axis" x1="54" x2="682" y1="238" y2="238"></line>
           <polyline class="forecast-line" points="{{ forecast.chart.polyline }}"></polyline>
           {% for point in forecast.chart.points %}
-            <circle class="forecast-point" cx="{{ point.x }}" cy="{{ point.y }}" r="6"></circle>
+            <circle class="forecast-point" cx="{{ point.x }}" cy="{{ point.y }}" r="6">
+              <title>
+                {{ point.date|date }} · {{ point.points }} из {{ forecast.max_primary_score }}
+                {% if point.primary_points is defined and point.primary_points is not none %} · ≈ {{ point.primary_points }} первичных из 32{% endif %}
+                {% if point.grade %} · оценка {{ point.grade }}{% endif %}
+                · изменение {{ '%+.1f'|format(point.change) }} · {{ point.label }} · {{ point.influence }}
+              </title>
+            </circle>
             <text class="forecast-point-label" x="{{ point.x }}" y="{{ point.y - 12 }}">{{ point.points }}</text>
             <text class="forecast-date-label" x="{{ point.x }}" y="264">{{ point.date|date }}</text>
           {% endfor %}
@@ -234,7 +250,7 @@
 
   <div class="cabinet-tab-panel" data-cabinet-panel="topics">
     <div class="section-heading compact">
-      <h2>Компетенции ОГЭ</h2>
+        <h2>{{ forecast.competencies_title }}</h2>
       <p>Здесь видно, какие части экзамена уже дают баллы, а какие пока держат прогноз ниже цели.</p>
     </div>
     {% if forecast.is_available %}
@@ -258,6 +274,8 @@
             </div>
             {% if item.comment %}
               <p>{{ item.comment }}</p>
+            {% elif item.description %}
+              <p>{{ item.description }}</p>
             {% endif %}
             {% if item.insufficient_data %}
               <small>Пока мало данных, значение рабочее и может быть скорректировано преподавателем.</small>

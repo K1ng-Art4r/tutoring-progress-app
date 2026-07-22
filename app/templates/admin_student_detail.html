@@ -139,7 +139,10 @@
     <div class="section-heading compact">
       <h2>Компетенции и прогноз</h2>
       {% if forecast.is_available %}
-        <p>{{ forecast.forecast_label }} · геометрия {{ forecast.geometry_points }} из {{ forecast.geometry_total }}</p>
+        <p>
+          {{ forecast.forecast_label }}
+          {% if forecast.has_geometry_threshold %}· геометрия {{ forecast.geometry_points }} из {{ forecast.geometry_total }}{% endif %}
+        </p>
       {% else %}
         <p>Для этого направления пока используется обычный список тем.</p>
       {% endif %}
@@ -175,6 +178,10 @@
           <label>
             Комментарий
             <input name="comment" value="{{ topic.comment }}" placeholder="Короткий комментарий">
+          </label>
+          <label>
+            Причина корректировки
+            <input name="adjustment_reason" placeholder="Например: результат урока или ручная проверка">
           </label>
           <button class="button small secondary" type="submit">Сохранить</button>
         </form>

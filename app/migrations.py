@@ -82,6 +82,7 @@ def run_lightweight_migrations(engine: Engine) -> None:
         "UPDATE diagnostic_works SET max_score = 20 WHERE max_score IS NULL",
         "UPDATE diagnostic_works SET is_active = TRUE WHERE is_active IS NULL",
         "ALTER TABLE diagnostic_tasks ADD COLUMN IF NOT EXISTS title VARCHAR(220) DEFAULT ''",
+        "ALTER TABLE diagnostic_tasks ADD COLUMN IF NOT EXISTS exam_line INTEGER",
         "ALTER TABLE diagnostic_tasks ADD COLUMN IF NOT EXISTS skill VARCHAR(260) DEFAULT ''",
         "ALTER TABLE diagnostic_tasks ADD COLUMN IF NOT EXISTS prompt TEXT DEFAULT ''",
         "ALTER TABLE diagnostic_tasks ADD COLUMN IF NOT EXISTS correct_answer VARCHAR(260) DEFAULT ''",
@@ -126,6 +127,19 @@ def run_lightweight_migrations(engine: Engine) -> None:
         "UPDATE diagnostic_answers SET auto_score = 0 WHERE auto_score IS NULL",
         "UPDATE diagnostic_answers SET teacher_comment = '' WHERE teacher_comment IS NULL",
         "ALTER TABLE students DROP COLUMN IF EXISTS view_count",
+        """
+        CREATE TABLE IF NOT EXISTS competency_adjustments (
+          id SERIAL PRIMARY KEY,
+          topic_id INTEGER NOT NULL REFERENCES topic_progress(id) ON DELETE CASCADE,
+          previous_level DOUBLE PRECISION NOT NULL,
+          new_level DOUBLE PRECISION NOT NULL,
+          teacher VARCHAR(120) DEFAULT 'Преподаватель',
+          reason TEXT DEFAULT 'Ручная корректировка',
+          comment TEXT DEFAULT '',
+          created_at TIMESTAMP DEFAULT now(),
+          updated_at TIMESTAMP DEFAULT now()
+        )
+        """,
         "ALTER TABLE students DROP COLUMN IF EXISTS last_viewed_at",
         """
         UPDATE students

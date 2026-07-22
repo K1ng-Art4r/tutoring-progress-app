@@ -14,6 +14,8 @@ from app.models import Student
 from app.progress_forecast import ensure_oge_competency_topics
 from app.routers import admin, cabinet, public
 from app.seed import seed_demo_data
+from app.seed_ege_base import seed_ege_base_demo_data
+from app.seed_ege_profile import seed_ege_profile_demo_data
 
 
 @asynccontextmanager
@@ -26,6 +28,8 @@ async def lifespan(app: FastAPI):
         db.commit()
         if settings.seed_demo_data:
             seed_demo_data(db)
+            seed_ege_base_demo_data(db)
+            seed_ege_profile_demo_data(db)
     yield
 
 

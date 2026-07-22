@@ -30,6 +30,8 @@ from app.models import (
 )
 from app.progress_forecast import build_student_forecast, ensure_oge_competency_topics
 from app.seed import seed_demo_data
+from app.seed_ege_base import EGE_BASE_DEMO_ACCESS_TOKEN, seed_ege_base_demo_data
+from app.seed_ege_profile import EGE_PROFILE_DEMO_ACCESS_TOKEN, seed_ege_profile_demo_data
 from app.view_helpers import templates
 
 router = APIRouter(prefix="/cabinet")
@@ -123,7 +125,11 @@ def cabinet_login_page(
             return RedirectResponse("/admin", status_code=303)
         saved_access_token = student_access_token_from_cookie(request)
         if saved_access_token:
-            if saved_access_token == DEMO_ACCESS_TOKEN:
+            if saved_access_token in {
+                DEMO_ACCESS_TOKEN,
+                EGE_BASE_DEMO_ACCESS_TOKEN,
+                EGE_PROFILE_DEMO_ACCESS_TOKEN,
+            }:
                 response = templates.TemplateResponse(
                     request,
                     "cabinet_login.html",
@@ -219,6 +225,12 @@ def student_cabinet(
         )
     if access_token == DEMO_ACCESS_TOKEN:
         seed_demo_data(db)
+        student = db.scalar(student_query)
+    elif access_token == EGE_BASE_DEMO_ACCESS_TOKEN:
+        seed_ege_base_demo_data(db)
+        student = db.scalar(student_query)
+    elif access_token == EGE_PROFILE_DEMO_ACCESS_TOKEN:
+        seed_ege_profile_demo_data(db)
         student = db.scalar(student_query)
     if ensure_oge_competency_topics(db, student):
         student = db.scalar(student_query)

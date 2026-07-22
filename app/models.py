@@ -267,6 +267,7 @@ class DiagnosticTask(Base, TimestampMixin):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     work_id: Mapped[int] = mapped_column(ForeignKey("diagnostic_works.id", ondelete="CASCADE"))
     position: Mapped[int] = mapped_column(Integer)
+    exam_line: Mapped[int | None] = mapped_column(Integer, nullable=True)
     title: Mapped[str] = mapped_column(String(220))
     skill: Mapped[str] = mapped_column(String(260), default="")
     prompt: Mapped[str] = mapped_column(Text)
@@ -322,3 +323,15 @@ class DiagnosticAnswer(Base, TimestampMixin):
 
     attempt: Mapped[DiagnosticAttempt] = relationship(back_populates="answers")
     task: Mapped[DiagnosticTask] = relationship(back_populates="answers")
+
+
+class CompetencyAdjustment(Base, TimestampMixin):
+    __tablename__ = "competency_adjustments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    topic_id: Mapped[int] = mapped_column(ForeignKey("topic_progress.id", ondelete="CASCADE"))
+    previous_level: Mapped[float] = mapped_column(Float)
+    new_level: Mapped[float] = mapped_column(Float)
+    teacher: Mapped[str] = mapped_column(String(120), default="Преподаватель")
+    reason: Mapped[str] = mapped_column(Text, default="Ручная корректировка")
+    comment: Mapped[str] = mapped_column(Text, default="")

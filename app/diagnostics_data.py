@@ -856,8 +856,41 @@ DIAGNOSTIC_WORKS = [
 ]
 
 
+EGE_BASE_DIAGNOSTIC_LINES = {
+    1: 14,
+    2: 15,
+    3: 16,
+    4: 1,
+    5: 3,
+    6: 6,
+    7: 17,
+    8: 7,
+    9: 9,
+    10: 11,
+    11: 4,
+    12: 12,
+}
+
+EGE_PROFILE_DIAGNOSTIC_LINES = {
+    1: 7,
+    2: 7,
+    3: 4,
+    4: 1,
+    5: 11,
+    6: 9,
+    7: 13,
+    8: 13,
+    9: 8,
+    10: 14,
+    11: 15,
+    12: 18,
+}
+
+
 def seed_diagnostic_works(db: Session) -> None:
     for work_data in DIAGNOSTIC_WORKS:
+        is_ege_base = work_data["slug"] == "ege-base-start"
+        is_ege_profile = work_data["slug"] == "ege-profile-start"
         work = db.scalar(select(DiagnosticWork).where(DiagnosticWork.slug == work_data["slug"]))
         if work is None:
             work = DiagnosticWork(slug=work_data["slug"])
@@ -866,9 +899,14 @@ def seed_diagnostic_works(db: Session) -> None:
         work.title = work_data["title"]
         work.subject = work_data["subject"]
         work.exam_type = work_data["exam_type"]
-        work.description = work_data["description"]
+        work.description = (
+            "Стартовый срез на 12 заданий с кратким ответом. Он проверяет ключевые навыки "
+            "базового ЕГЭ за 40 минут и помогает определить фокус первых недель подготовки."
+            if is_ege_base
+            else work_data["description"]
+        )
         work.duration_minutes = work_data["duration_minutes"]
-        work.max_score = work_data["max_score"]
+        work.max_score = 12 if is_ege_base else work_data["max_score"]
         work.is_active = True
         db.flush()
 
@@ -879,13 +917,26 @@ def seed_diagnostic_works(db: Session) -> None:
                 task = DiagnosticTask(work_id=work.id, position=task_data["position"])
                 db.add(task)
             task.title = task_data["title"]
+            task.exam_line = (
+                EGE_BASE_DIAGNOSTIC_LINES[task_data["position"]]
+                if is_ege_base
+                else EGE_PROFILE_DIAGNOSTIC_LINES[task_data["position"]]
+                if is_ege_profile
+                else task_data.get("exam_line")
+            )
             task.skill = task_data["skill"]
-            task.prompt = task_data["prompt"]
+            task.prompt = task_data["prompt"].replace("Запишите ход решения и ", "").replace(
+                "Запишите ход решения.", ""
+            )
             task.image_path = task_data.get("image_path", "")
             task.correct_answer = task_data["correct_answer"]
             task.solution = task_data["solution"]
-            task.max_score = task_data["max_score"]
-            task.requires_solution = task_data.get("requires_solution", False)
-            task.criteria = task_data["criteria"]
+            task.max_score = 1 if is_ege_base else task_data["max_score"]
+            task.requires_solution = False if is_ege_base else task_data.get("requires_solution", False)
+            task.criteria = (
+                "1 балл — верный краткий ответ; 0 баллов — неверный ответ."
+                if is_ege_base
+                else task_data["criteria"]
+            )
 
     db.commit()

@@ -12,6 +12,8 @@ from app.models import DiagnosticTask, Lead
 from app.notifications import notify_new_lead
 from app.options import CLASS_OPTIONS, GOAL_OPTIONS, SUBJECT_OPTIONS
 from app.seed import seed_demo_data
+from app.seed_ege_base import EGE_BASE_DEMO_ACCESS_TOKEN
+from app.seed_ege_profile import EGE_PROFILE_DEMO_ACCESS_TOKEN
 from app.view_helpers import templates
 
 router = APIRouter()
@@ -19,7 +21,11 @@ router = APIRouter()
 
 def _public_page(request: Request, template_name: str, context: dict):
     response = templates.TemplateResponse(request, template_name, context)
-    if student_access_token_from_cookie(request) == DEMO_ACCESS_TOKEN:
+    if student_access_token_from_cookie(request) in {
+        DEMO_ACCESS_TOKEN,
+        EGE_BASE_DEMO_ACCESS_TOKEN,
+        EGE_PROFILE_DEMO_ACCESS_TOKEN,
+    }:
         clear_student_login_cookie(response)
     return response
 

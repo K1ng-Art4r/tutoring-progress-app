@@ -18,6 +18,7 @@ from app.file_uploads import save_diagnostic_task_image, save_pdf_upload
 from app.models import (
     STUDENT_STATUSES,
     Checkpoint,
+    CompetencyAdjustment,
     DiagnosticAnswer,
     DiagnosticAttempt,
     DiagnosticTask,
@@ -381,6 +382,8 @@ async def create_diagnostic_work(
             return RedirectResponse("/admin/diagnostics/new?error=invalid_tasks", status_code=303)
         try:
             task_max_score = min(max(int(str(form.get(f"task_max_score_{index}", "1"))), 1), 20)
+            raw_exam_line = str(form.get(f"task_exam_line_{index}", "")).strip()
+            exam_line = min(max(int(raw_exam_line), 1), 31) if raw_exam_line else None
         except ValueError:
             return RedirectResponse("/admin/diagnostics/new?error=invalid_tasks", status_code=303)
 
@@ -402,6 +405,7 @@ async def create_diagnostic_work(
                 "solution": str(form.get(f"task_solution_{index}", "")).strip(),
                 "criteria": str(form.get(f"task_criteria_{index}", "")).strip(),
                 "max_score": task_max_score,
+                "exam_line": exam_line,
                 "requires_solution": str(form.get(f"task_requires_solution_{index}", "")) == "1",
                 "image_upload": image_upload if image_filename else None,
             }
@@ -423,6 +427,7 @@ async def create_diagnostic_work(
         task = DiagnosticTask(
             work_id=work.id,
             position=position,
+            exam_line=row["exam_line"],
             title=row["title"],
             skill=row["skill"],
             prompt=row["prompt"],
@@ -946,6 +951,7 @@ def update_topic(
     weight: Annotated[str, Form()] = "1",
     mastery_level: Annotated[str, Form()] = "",
     insufficient_data: Annotated[str | None, Form()] = None,
+    adjustment_reason: Annotated[str, Form()] = "Ручная корректировка преподавателя",
     db: Session = Depends(get_db),
 ):
     redirect = _require_admin(request)
@@ -955,13 +961,26 @@ def update_topic(
     if item is None:
         return RedirectResponse("/admin", status_code=303)
     selected_status = status if status in TOPIC_STATUSES else item.status
+    previous_level = float(item.mastery_level or 0.0)
+    new_level = _parse_mastery_level(mastery_level, selected_status)
     item.topic = topic.strip()
     item.competency_key = competency_key.strip()
     item.weight = _parse_weight(weight, item.weight)
-    item.mastery_level = _parse_mastery_level(mastery_level, selected_status)
+    item.mastery_level = new_level
     item.status = selected_status
     item.comment = comment.strip()
     item.insufficient_data = insufficient_data == "on"
+    if abs(new_level - previous_level) > 0.0001:
+        db.add(
+            CompetencyAdjustment(
+                topic_id=item.id,
+                previous_level=previous_level,
+                new_level=new_level,
+                teacher="Преподаватель",
+                reason=adjustment_reason.strip() or "Ручная корректировка преподавателя",
+                comment=comment.strip(),
+            )
+        )
     db.commit()
     return _redirect_to_student(item.student_id)
 
