@@ -215,6 +215,12 @@ def student_cabinet(
             selectinload(Student.diagnostic_attempts).selectinload(DiagnosticAttempt.work),
         )
     )
+    if access_token == DEMO_ACCESS_TOKEN:
+        seed_demo_data(db)
+    elif access_token == EGE_BASE_DEMO_ACCESS_TOKEN:
+        seed_ege_base_demo_data(db)
+    elif access_token == EGE_PROFILE_DEMO_ACCESS_TOKEN:
+        seed_ege_profile_demo_data(db)
     student = db.scalar(student_query)
     if student is None:
         return templates.TemplateResponse(
@@ -223,15 +229,6 @@ def student_cabinet(
             {"request": request, "is_admin": False, "noindex": True},
             status_code=404,
         )
-    if access_token == DEMO_ACCESS_TOKEN:
-        seed_demo_data(db)
-        student = db.scalar(student_query)
-    elif access_token == EGE_BASE_DEMO_ACCESS_TOKEN:
-        seed_ege_base_demo_data(db)
-        student = db.scalar(student_query)
-    elif access_token == EGE_PROFILE_DEMO_ACCESS_TOKEN:
-        seed_ege_profile_demo_data(db)
-        student = db.scalar(student_query)
     if ensure_oge_competency_topics(db, student):
         student = db.scalar(student_query)
 
